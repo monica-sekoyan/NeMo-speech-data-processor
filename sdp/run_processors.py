@@ -105,10 +105,11 @@ def run_processors(cfg):
                 OmegaConf.set_struct(processor_cfg, False)
                 processor_cfg["output_manifest_file"] = tmp_file_path
                 OmegaConf.set_struct(processor_cfg, True)
-                if idx != len(processors_cfgs) - 1 and "input_manifest_file" not in processors_cfgs[idx + 1]:
-                    OmegaConf.set_struct(processors_cfgs[idx + 1], False)
-                    processors_cfgs[idx + 1]["input_manifest_file"] = tmp_file_path
-                    OmegaConf.set_struct(processors_cfgs[idx + 1], True)
+
+            if idx != len(processors_cfgs) - 1 and "input_manifest_file" not in processors_cfgs[idx + 1]:
+                OmegaConf.set_struct(processors_cfgs[idx + 1], False)
+                processors_cfgs[idx + 1]["input_manifest_file"] = processor_cfg["output_manifest_file"]
+                OmegaConf.set_struct(processors_cfgs[idx + 1], True)
 
             processor = hydra.utils.instantiate(processor_cfg)
             # running runtime tests to fail right-away if something is not
