@@ -14,10 +14,10 @@
 
 import json
 import os
+import shutil
 import tarfile
 from functools import partial
 from pathlib import Path
-import shutil
 from typing import Callable
 from unittest import mock
 
@@ -90,6 +90,8 @@ def get_test_cases():
         # audio will be downloaded on the fly from a subset of files.
         # No checks, but need to mock the url list function (done above)
         (f"{DATASET_CONFIGS_ROOT}/english/coraal/config.yaml", lambda raw_data_dir: True),
+        (f"{DATASET_CONFIGS_ROOT}/armenian/text_mcv/config.yaml", lambda raw_data_dir: True),
+        (f"{DATASET_CONFIGS_ROOT}/armenian/audio_books/config.yaml", lambda raw_data_dir: True),
     ]
 
 
@@ -162,7 +164,8 @@ def test_configs(config_path: str, data_check_fn: Callable, tmp_path: str):
     cfg["processors_to_run"] = "all"
     cfg["workspace_dir"] = str(tmp_path)
     cfg["final_manifest"] = str(tmp_path / "final_manifest.json")
-    cfg["data_split"] = "train"
+    if "data_split" not in cfg:
+        cfg["data_split"] = "train"
     cfg["processors"][0]["raw_data_dir"] = str(Path(test_data_root) / rel_path_from_root)
 
     run_processors(cfg)
@@ -178,8 +181,9 @@ def test_configs(config_path: str, data_check_fn: Callable, tmp_path: str):
         for reference_line, generated_line in zip(reference_lines, generated_lines):
             reference_data = json.loads(reference_line)
             generated_data = json.loads(generated_line)
-            reference_data.pop("audio_filepath")
-            generated_data.pop("audio_filepath")
+            if "audio_filepath" in reference_data:
+                reference_data.pop("audio_filepath")
+                generated_data.pop("audio_filepath")
             assert reference_data == generated_data
 
     # if CLEAN_UP_TMP_PATH is set to non-0 value, we will delete tmp_path
