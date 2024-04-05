@@ -89,6 +89,9 @@ class CreateInitialManifestMCV(BaseParallelProcessor):
 
         if not self.already_extracted:
             tar_gz_files = glob.glob(str(self.raw_data_dir) + f"/*{self.language_id}.tar.gz")
+            tar_files = glob.glob(str(self.raw_data_dir) + f"/*{self.language_id}.tar")
+            tar_gz_files.extend(tar_files)
+
             if not tar_gz_files:
                 raise RuntimeError(
                     f"Did not find any file matching {self.raw_data_dir}/*.tar.gz. "
@@ -102,9 +105,11 @@ class CreateInitialManifestMCV(BaseParallelProcessor):
                 )
 
             data_folder = extract_archive(tar_gz_files[0], self.extract_archive_dir)
+
             self.transcription_file = Path(data_folder)
         else:
             self.transcription_file = Path(self.extract_archive_dir) / self.language_id
+
         self.audio_path_prefix = str(self.transcription_file / "clips")
         self.transcription_file = str(self.transcription_file / (self.data_split + ".tsv"))
         os.makedirs(self.resampled_audio_dir, exist_ok=True)

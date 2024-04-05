@@ -22,7 +22,7 @@ import wget
 from sdp.logging import logger
 
 
-def download_file(source_url: str, target_directory: str, verbose = True):
+def download_file(source_url: str, target_directory: str, verbose=True):
     # make sure target_directory is an absolute path to avoid bugs when we change directories to download data later
     target_directory = os.path.abspath(target_directory)
 
@@ -35,8 +35,8 @@ def download_file(source_url: str, target_directory: str, verbose = True):
         if verbose:
             logger.info(f"Found file {target_filepath} => will not be attempting download from {source_url}")
     else:
-        original_dir = os.getcwd() # record current working directory so can cd back to it
-        os.chdir(target_directory) # cd to target dir so that temporary download file will be saved in target dir
+        original_dir = os.getcwd()  # record current working directory so can cd back to it
+        os.chdir(target_directory)  # cd to target dir so that temporary download file will be saved in target dir
 
         wget.download(source_url, target_directory)
 
@@ -47,12 +47,13 @@ def download_file(source_url: str, target_directory: str, verbose = True):
 
     return target_filepath
 
+
 def extract_archive(archive_path: str, extract_path: str, force_extract: bool = False) -> str:
     logger.info(f"Attempting to extract all contents from tar file {archive_path} and save in {extract_path}")
     if not force_extract:
         if tarfile.is_tarfile(archive_path):
             with tarfile.open(archive_path, "r") as archive:
-                archive_extracted_dir = archive.getnames()[0]
+                archive_extracted_dir = os.path.dirname(archive.getnames()[0])
         elif zipfile.is_zipfile(archive_path):
             with zipfile.ZipFile(archive_path, "r") as archive:
                 archive_extracted_dir = archive.namelist()[0]

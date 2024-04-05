@@ -18,6 +18,7 @@ from sdp.processors.datasets.coraal import (
     CreateInitialManifestCORAAL,
     TrainDevTestSplitCORAAL,
 )
+from sdp.processors.datasets.lhotse import LhotseImport
 from sdp.processors.datasets.mcv.create_initial_manifest import CreateInitialManifestMCV
 from sdp.processors.datasets.mls.create_initial_manifest import CreateInitialManifestMLS
 from sdp.processors.datasets.mls.restore_pc import RestorePCForMLS
@@ -25,22 +26,25 @@ from sdp.processors.datasets.slr83.create_initial_manifest import (
     CreateInitialManifestSLR83,
     CustomDataSplitSLR83,
 )
+from sdp.processors.datasets.slr140.create_initial_manifest import (
+    CreateInitialManifestSLR140,
+    CustomDataSplitSLR140,
+)
 from sdp.processors.datasets.voxpopuli.create_initial_manifest import (
     CreateInitialManifestVoxpopuli,
 )
 from sdp.processors.datasets.voxpopuli.normalize_from_non_pc_text import (
     NormalizeFromNonPCTextVoxpopuli,
 )
-from sdp.processors.datasets.lhotse import LhotseImport
 from sdp.processors.modify_manifest.common import (
     AddConstantFields,
     ChangeToRelativePath,
     CombineSources,
     DuplicateFields,
+    KeepOnlySpecifiedFields,
     RenameFields,
     SortManifest,
     SplitOnFixedDuration,
-    KeepOnlySpecifiedFields,
 )
 from sdp.processors.modify_manifest.data_to_data import (
     InsIfASRInsertion,

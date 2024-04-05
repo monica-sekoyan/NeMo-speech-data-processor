@@ -1,0 +1,28 @@
+documentation: |
+  ####################
+
+  TBD
+
+processors_to_run: all
+data_split: ???
+workspace_dir: ???
+audios: ???
+final_manifest: ${workspace_dir}/${data_split}_manifest.json
+
+processors:
+  - _target_: sdp.processors.CreateInitialManifestSLR140
+    audios: ${audios}
+    raw_data_dir: ${workspace_dir}/raw_data
+
+  - _target_: sdp.processors.CustomDataSplitSLR140
+    data_split: ${data_split}
+
+  - _target_: sdp.processors.ChangeToRelativePath
+    base_dir: ${workspace_dir}
+
+  - _target_: sdp.processors.KeepOnlySpecifiedFields
+    output_manifest_file: ${final_manifest}
+    fields_to_keep:
+      - audio_filepath
+      - text
+      - duration
