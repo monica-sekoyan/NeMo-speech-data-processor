@@ -18,9 +18,6 @@ from sdp.processors.datasets.coraal import (
     CreateInitialManifestCORAAL,
     TrainDevTestSplitCORAAL,
 )
-from sdp.processors.datasets.ksc2.create_initial_manifest import (
-    CreateInitialManifestKSC2,
-)
 from sdp.processors.datasets.lhotse import LhotseImport
 from sdp.processors.datasets.mcv.create_initial_manifest import CreateInitialManifestMCV
 from sdp.processors.datasets.mls.create_initial_manifest import CreateInitialManifestMLS
@@ -28,9 +25,6 @@ from sdp.processors.datasets.mls.restore_pc import RestorePCForMLS
 from sdp.processors.datasets.slr83.create_initial_manifest import (
     CreateInitialManifestSLR83,
     CustomDataSplitSLR83,
-)
-from sdp.processors.datasets.slr102.create_initial_manifest import (
-    CreateInitialManifestSLR102,
 )
 from sdp.processors.datasets.slr140.create_initial_manifest import (
     CreateInitialManifestSLR140,

@@ -2,8 +2,7 @@ processors_to_run: all
 data_split: ???
 workspace_dir: ???
 final_manifest: ${workspace_dir}/${data_split}_manifest.json
-remove_pc: True
-remove_hyphen: True
+remove_pc: False
 
 processors:
   - _target_: sdp.processors.CreateInitialManifestMCV
@@ -14,39 +13,16 @@ processors:
     data_split: ${data_split}
     raw_data_dir: ${workspace_dir}
 
-  - _target_: sdp.processors.GetAudioDuration
-    audio_filepath_key: audio_filepath
-    duration_key: duration
-
-  - _target_: sdp.processors.PreserveByValue
-    input_value_key: duration
-    target_value: 0
-    operator: gt
-
   - _target_: sdp.processors.SubRegex
     regex_params_list:
       - { "pattern": "!", "repl": "." }
-      - { "pattern": ":", "repl": "," }
-      - { "pattern": "‚", "repl": "," } # single low quotation mark to comma
-      - { "pattern": '[»«""]', "repl": '' }
-      - { "pattern": "[»«'']", "repl": '' }
+      - { "pattern": "[»«]", "repl": '' }
       - { "pattern": '[\(\{\[].*?[\)\}\]]', "repl": '' }
       - { "pattern": "[/]", "repl": " " }
       - { "pattern": "[-—–]", "repl": "-" }
     test_cases:
       - { input: { text: "Wow!" }, output: { text: "Wow." } }
       - { input: { text: "«Өзімнен артық жоқ»" }, output: { text: "Өзімнен артық жоқ" } }
-
-  - _target_: sdp.processors.SubRegex
-    regex_params_list:
-      - { "pattern": "т б", "repl": "тағы басқа" }
-      - { "pattern": "т.б", "repl": "тағы басқа" }
-    test_cases:
-      - { input: { text: "жүйелері және т б" }, output: { text: "жүйелері және тағы басқа" } }
-
-  - _target_: sdp.processors.langs.kazakh.LatinToCyrillic
-    test_cases:
-      - { input: { text: "зерттеулерi қазақ" }, output: { text: "зерттеулері қазақ" } }
 
   - _target_: sdp.processors.DropNonAlphabet
     alphabet: "-.,? АаӘәБбВвГгҒғДдЕеЁёЖжЗзИиЙйКкҚқЛлМмНнҢңОоӨөПпРрСсТтУуҰұҮүФфХхҺһЦцЧчШшЩщЪъЫыІіЬьЭэЮюЯя"
@@ -72,7 +48,7 @@ processors:
   - _target_: sdp.processors.SubRegex
     should_run: ${remove_hyphen}
     regex_params_list:
-      - { "pattern": ' - ', "repl": "" }
+      - { "pattern": '-', "repl": "" }
 
   # ----------------------------------------------------------------------
 
