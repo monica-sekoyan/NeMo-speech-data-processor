@@ -41,9 +41,6 @@ from sdp.processors.datasets.slr83.create_initial_manifest import (
     CreateInitialManifestSLR83,
     CustomDataSplitSLR83,
 )
-from sdp.processors.datasets.slr102.create_initial_manifest import (
-    CreateInitialManifestSLR102,
-)
 from sdp.processors.datasets.slr140.create_initial_manifest import (
     CreateInitialManifestSLR140,
     CustomDataSplitSLR140,
