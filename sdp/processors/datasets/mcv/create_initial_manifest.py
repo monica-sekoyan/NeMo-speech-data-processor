@@ -140,7 +140,6 @@ class CreateInitialManifestMCV(BaseParallelProcessor):
 
         data = {
             "audio_filepath": output_wav_path,
-            "duration": float(sox.file_info.duration(output_wav_path)),
             "text": transcript_text,
         }
 

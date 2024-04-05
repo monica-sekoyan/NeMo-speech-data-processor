@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
-import sox
 from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
 
@@ -122,7 +121,6 @@ class CreateInitialManifestSLR140(BaseParallelProcessor):
         audio_path = str(self.raw_data_dir / data_entry["wav"].replace("dataset/", ""))
         data = {
             "audio_filepath": audio_path,
-            "duration": float(sox.file_info.duration(audio_path)),
             "text": data_entry["text"].strip(),
         }
 
