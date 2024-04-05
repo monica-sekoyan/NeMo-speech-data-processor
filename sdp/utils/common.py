@@ -26,36 +26,6 @@ import wget
 from sdp.logging import logger
 
 
-def load_manifest(manifest: Path) -> List[Dict[str, Union[str, float]]]:
-    # read NeMo manifest as a list of dicts
-    result = []
-    with manifest.open() as f:
-        for line in f:
-            data = json.loads(line)
-            result.append(data)
-    return result
-
-
-def ffmpeg_convert(input_file: str, output_wav: str, sample_rate: int = 0, num_channels: int = 1):
-    process_args = [
-        "ffmpeg",
-        "-i",
-        input_file,
-        '-ac',
-        str(num_channels),
-        "-map",
-        "0:a",
-        "-c:a",
-        "pcm_s16le",
-        "-y",
-        output_wav,
-    ]
-    if sample_rate:
-        process_args = process_args[:-1]
-        process_args.extend(["-ar", str(sample_rate), output_wav])
-    return subprocess.run(process_args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-
 def download_file(source_url: str, target_directory: str, verbose=True):
     # make sure target_directory is an absolute path to avoid bugs when we change directories to download data later
     target_directory = os.path.abspath(target_directory)
@@ -69,7 +39,6 @@ def download_file(source_url: str, target_directory: str, verbose=True):
         if verbose:
             logger.info(f"Found file {target_filepath} => will not be attempting download from {source_url}")
     else:
-        logger.info(f"Not found file {target_filepath}")
         original_dir = os.getcwd()  # record current working directory so can cd back to it
         os.chdir(target_directory)  # cd to target dir so that temporary download file will be saved in target dir
 
@@ -88,7 +57,7 @@ def extract_archive(archive_path: str, extract_path: str, force_extract: bool = 
     if not force_extract:
         if tarfile.is_tarfile(archive_path):
             with tarfile.open(archive_path, "r") as archive:
-                archive_extracted_dir = os.path.commonprefix(archive.getnames()[1:])
+                archive_extracted_dir = os.path.dirname(archive.getnames()[0])
         elif zipfile.is_zipfile(archive_path):
             with zipfile.ZipFile(archive_path, "r") as archive:
                 archive_extracted_dir = archive.namelist()[1]
