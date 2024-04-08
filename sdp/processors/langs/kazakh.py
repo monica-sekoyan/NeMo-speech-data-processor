@@ -1,4 +1,4 @@
-# Copyright (c) 2024, NVIDIA CORPORATION & AFFILIATES.  All rights reserved.
+# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,26 +12,44 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import collections
+from pathlib import Path
+
+import pandas as pd
 from typing import List
 
+from sdp.processors.base_processor import (
+    BaseParallelProcessor,
+    BaseProcessor,
+    DataEntry,
+)
+
 from sdp.logging import logger
-from sdp.processors.base_processor import BaseParallelProcessor, DataEntry
+from sdp.utils.common import load_manifest
 
 
 class LatinToCyrillic(BaseParallelProcessor):
-    """Converts visually identical latin letters  to cyrillic equivalents.
+    """Drops utterances if they contain characters that are not in the ``alphabet``.
 
     Args:
+        alphabet (str): a string containing all of the characters in our alphabet.
+            If an utterance contains at least one character that is not in the
+            ``alphabet``, then that utterance will be dropped.
         text_key (str): a string indicating which key of the data entries
             should be used to find the utterance transcript. Defaults to "text".
 
+            .. note::
+                Don't forget to include spaces in your alphabet, unless you
+                want to make sure none of the utterances contain spaces.
+
     Returns:
-         The same data as in the input manifest with latin letters replaced with cyrillic ones.
+         The same data as in the input manifest with some entries dropped.
     """
 
     LATIN = "AaƏəBEeKkMHOoPpCcTYyXxhi"
     CYRILLIC = "АаӘәВЕеКкМНОоРрСсТУуХхһі"
+
 
     def __init__(
         self,
@@ -42,6 +60,7 @@ class LatinToCyrillic(BaseParallelProcessor):
         self.text_key = text_key
 
     def process_dataset_entry(self, data_entry) -> List:
+        drop_this_utt = False
         latin_counter = collections.defaultdict(int)
 
         text_in = data_entry[self.text_key]
