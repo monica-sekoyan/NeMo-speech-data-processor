@@ -50,14 +50,14 @@ def data_check_fn_mtedx(raw_data_dir: str, language_id: str) -> None:
     expected_file = Path(raw_data_dir) / f"mtedx_{language_id}.tgz"
 
 
-def data_check_fn_slr140(raw_data_dir: str) -> None:
+def data_check_fn_slr140(raw_data_dir: str, language: str) -> None:
     """Raises error if do not find expected data.
 
     Will also extract the archive as initial processor expects extracted data.
     """
     tgt_dir = Path(raw_data_dir)
 
-    expected_file = Path(raw_data_dir) / f"slr140_kk.tar.gz"
+    expected_file = Path(raw_data_dir) / f"slr140_{language}.tar.gz"
     if not expected_file.exists():
         raise ValueError(f"No such file {str(expected_file)}")
 
@@ -65,30 +65,6 @@ def data_check_fn_slr140(raw_data_dir: str) -> None:
 def data_check_fn_coraa(raw_data_dir: str) -> None:
     """Raises error if do not find expected data"""
     expected_file = Path(raw_data_dir) / "train_dividido/train.part1.rar"
-    if not expected_file.exists():
-        raise ValueError(f"No such file {str(expected_file)}")
-
-
-def data_check_fn_slr102(raw_data_dir: str) -> None:
-    """Raises error if do not find expected data.
-
-    Will also extract the archive as initial processor expects extracted data.
-    """
-    tgt_dir = Path(raw_data_dir)
-
-    expected_file = Path(raw_data_dir) / f"slr102_kk.tar.gz"
-    if not expected_file.exists():
-        raise ValueError(f"No such file {str(expected_file)}")
-
-
-def data_check_fn_ksc2(raw_data_dir: str) -> None:
-    """Raises error if do not find expected data.
-
-    Will also extract the archive as initial processor expects extracted data.
-    """
-    tgt_dir = Path(raw_data_dir)
-
-    expected_file = Path(raw_data_dir) / f"ksc2_kk.tar.gz"
     if not expected_file.exists():
         raise ValueError(f"No such file {str(expected_file)}")
 
@@ -166,9 +142,7 @@ def get_test_cases():
         (f"{DATASET_CONFIGS_ROOT}/armenian/audio_books/config.yaml", lambda raw_data_dir: True),
         (f"{DATASET_CONFIGS_ROOT}/english/librispeech/config.yaml", data_check_fn_librispeech),
         (f"{DATASET_CONFIGS_ROOT}/kazakh/mcv/config.yaml", partial(data_check_fn_mcv, archive_file_stem="mcv_kk")),
-        (f"{DATASET_CONFIGS_ROOT}/kazakh/slr140/config.yaml", data_check_fn_slr140),
-        (f"{DATASET_CONFIGS_ROOT}/kazakh/slr102/config.yaml", data_check_fn_slr102),
-        (f"{DATASET_CONFIGS_ROOT}/kazakh/ksc2/config.yaml", data_check_fn_ksc2),
+        (f"{DATASET_CONFIGS_ROOT}/kazakh/slr140/config.yaml", partial(data_check_fn_slr140, language="kk")),
     ]
 
 
