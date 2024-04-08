@@ -27,6 +27,8 @@ from omegaconf import OmegaConf
 import sdp.processors.datasets.coraal.create_initial_manifest as coraal_processor
 from sdp.run_processors import run_processors
 
+from sdp.utils.common import extract_tar_with_strip_components
+
 DATASET_CONFIGS_ROOT = Path(__file__).parents[1] / "dataset_configs"
 
 
@@ -43,6 +45,19 @@ def data_check_fn_mcv(raw_data_dir: str, archive_file_stem: str) -> None:
     if not expected_file.exists():
         raise ValueError(f"No such file {str(expected_file)}")
 
+
+def data_check_fn_slr140(raw_data_dir: str, language: str) -> None:
+    """Raises error if do not find expected data.
+
+    Will also extract the archive as initial processor expects extracted data.
+    """
+    tgt_dir = Path(raw_data_dir)
+
+    expected_file = Path(raw_data_dir) / f"slr140_{language}.tar.gz"
+    if not expected_file.exists():
+        raise ValueError(f"No such file {str(expected_file)}")
+
+    extract_tar_with_strip_components(expected_file, tgt_dir, strip_components=1)
 
 def data_check_fn_voxpopuli(raw_data_dir: str) -> None:
     """Raises error if do not find expected data.
@@ -92,6 +107,8 @@ def get_test_cases():
         (f"{DATASET_CONFIGS_ROOT}/english/coraal/config.yaml", lambda raw_data_dir: True),
         (f"{DATASET_CONFIGS_ROOT}/armenian/text_mcv/config.yaml", lambda raw_data_dir: True),
         (f"{DATASET_CONFIGS_ROOT}/armenian/audio_books/config.yaml", lambda raw_data_dir: True),
+        (f"{DATASET_CONFIGS_ROOT}/kazakh/mcv/config.yaml", partial(data_check_fn_mcv, archive_file_stem="mcv_kk")),
+        (f"{DATASET_CONFIGS_ROOT}/kazakh/slr140/config.yaml", partial(data_check_fn_slr140, language="kk"))
     ]
 
 
