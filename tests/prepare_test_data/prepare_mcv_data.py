@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir_path = Path(tmpdir)
+        tmpdir_path = Path(tmpdir, "kk")
         os.makedirs(tmpdir_path / "clips")
         for split in ["train", "dev", "test"]:
             transcript_path = Path(args.extracted_data_path) / f"{split}.tsv"

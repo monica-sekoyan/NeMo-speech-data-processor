@@ -1,4 +1,4 @@
-# Copyright (c) 2024, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
 """Will take the downloaded tar file and create a version with only X entries."""
 
 import argparse
-import json
 import os
+import json
 import shutil
 import tarfile
-import tempfile
 import zipfile
+import tempfile
 from pathlib import Path
 
 if __name__ == "__main__":
@@ -49,7 +49,8 @@ if __name__ == "__main__":
             with open(transcript_path, "rt", encoding="utf-8-sig") as fin, open(
                 audio_tmpdir / "train.json", "wt", encoding="utf-8-sig"
             ) as fout:
-                sample = [json.loads(line) for line in fin.readlines()][0][: args.num_entries]
+
+                sample = [json.loads(line) for line in fin.readlines()][0][:args.num_entries]
 
                 for entry in sample:
                     utt_id = entry['wav'].split('/')[-1]
@@ -57,7 +58,7 @@ if __name__ == "__main__":
 
                     utt_tmp_dir = audio_tmpdir / utt_dir
                     utt_tmp_dir.mkdir(exist_ok=True)
-
+            
                     src_wav_path = audio_dir / utt_dir / utt_id
                     tgt_wav_path = utt_tmp_dir / utt_id
                     shutil.copy(src_wav_path, tgt_wav_path)
