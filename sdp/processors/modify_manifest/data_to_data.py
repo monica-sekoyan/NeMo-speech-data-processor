@@ -73,11 +73,9 @@ class FfmpegConvert(BaseParallelProcessor):
         ``<resampled_audio_dir>/dir_name1/dirname2/filename.wav``.
 
     Args:
-        converted_audio_dir (str): The directory to store the resampled audio files.
-        input_file_key (str): The field in the dataset representing the path to the input video or audio files.
-        output_file_key (str): The field in the dataset representing the path to the resampled audio files with ``output_format``. If ``id_key`` is None, the output file path will be ``<resampled_audio_dir>/<input file name without extension>.wav``.
-        id_key (str, optional): The field in the dataset representing the unique ID or identifier for each entry. If ``id_key`` is not None, the output file path will be ``<resampled_audio_dir>/<id_key>.wav``. Defaults to None.
-        output_format (str, optional): output_format (str): Format of the output audio files. Defaults to `wav`.
+        resampled_audio_dir (str): The directory to store the resampled audio files.
+        media_file_key (str): The field in the dataset representing the path to the input video or audio files and store the path to the resampled audio files in the dataset.
+        id_key (str): The field in the dataset representing the unique ID or identifier for each entry. Defaults to None.
         target_samplerate (int, optional): The target sampling rate for the resampled audio. Defaults to 16000.
         target_nchannels (int, optional): The target number of channels for the resampled audio. Defaults to 1.
         **kwargs: Additional keyword arguments to be passed to the base class `BaseParallelProcessor`.
@@ -91,7 +89,6 @@ class FfmpegConvert(BaseParallelProcessor):
         output_file_key: str,
         id_key: str = None,
         base_dir: str = None,
-        output_format: str = "wav",
         target_samplerate: int = 16000,
         target_nchannels: int = 1,
         **kwargs,
@@ -102,6 +99,7 @@ class FfmpegConvert(BaseParallelProcessor):
         self.output_file_key = output_file_key
         self.output_format = output_format
         self.id_key = id_key
+        self.resampled_audio_dir = resampled_audio_dir
         self.base_dir = base_dir
         self.target_samplerate = target_samplerate
         self.target_nchannels = target_nchannels
@@ -117,6 +115,14 @@ class FfmpegConvert(BaseParallelProcessor):
             os.makedirs(os.path.join(self.converted_audio_dir, *key.split("/")[:-1]), exist_ok=True)
         else:
             key = os.path.splitext(input_file)[0].split("/")[-1]
+
+        if self.base_dir:
+            new_dir = os.path.dirname(os.path.relpath(input_file, self.base_dir))
+            os.makedirs(os.path.join(self.resampled_audio_dir, new_dir), exist_ok=True)
+
+            key = os.path.join(new_dir, key)
+
+        audio = os.path.join(self.resampled_audio_dir, key) + ".wav"
 
         if self.base_dir:
             new_dir = os.path.dirname(os.path.relpath(input_file, self.base_dir))
