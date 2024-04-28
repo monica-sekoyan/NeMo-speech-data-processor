@@ -2,17 +2,18 @@ processors_to_run: all
 data_split: ???
 workspace_dir: ???
 final_manifest: ${workspace_dir}/${data_split}_manifest.json
-remove_pc: True
-remove_hyphen: True
+remove_pc: False
+remove_hyphen: False
 
 processors:
-  - _target_: sdp.processors.CreateInitialManifestMCV
+  - _target_: sdp.processors.CreateInitialManifestKSC2
     output_manifest_file: ${final_manifest}
-    language_id: kk
     extract_archive_dir: ${workspace_dir}/raw_data
     resampled_audio_dir: ${workspace_dir}/${data_split}
     data_split: ${data_split}
     raw_data_dir: ${workspace_dir}
+    target_samplerate: 16000
+    target_nchannels: 1
 
   - _target_: sdp.processors.GetAudioDuration
     audio_file_key: audio_filepath
@@ -72,7 +73,7 @@ processors:
   - _target_: sdp.processors.SubRegex
     should_run: ${remove_hyphen}
     regex_params_list:
-      - { "pattern": ' - ', "repl": "" }
+      - { "pattern": '-', "repl": "" }
 
   # ----------------------------------------------------------------------
 
@@ -85,3 +86,4 @@ processors:
       - audio_filepath
       - text
       - duration
+      - source

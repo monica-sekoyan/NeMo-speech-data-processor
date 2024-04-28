@@ -67,12 +67,7 @@ class FfmpegConvert(BaseParallelProcessor):
     and input file name saves to id_key back.
     Args:
         resampled_audio_dir (str): The directory to store the resampled audio files.
-<<<<<<< HEAD
-        input_file_key (str): The field in the dataset representing the path to the input video or audio files.
-        output_file_key (str): The field to store the path to the resampled audio files in the dataset.
-=======
         media_file_key (str): The field in the dataset representing the path to the input video or audio files and store the path to the resampled audio files in the dataset.
->>>>>>> upstream/armenian
         id_key (str): The field in the dataset representing the unique ID or identifier for each entry. Defaults to None.
         target_samplerate (int, optional): The target sampling rate for the resampled audio. Defaults to 16000.
         target_nchannels (int, optional): The target number of channels for the resampled audio. Defaults to 1.
@@ -85,6 +80,7 @@ class FfmpegConvert(BaseParallelProcessor):
         resampled_audio_dir: str,
         media_file_key: str,
         id_key: str = None,
+        base_dir: str = None,
         target_samplerate: int = 16000,
         target_nchannels: int = 1,
         **kwargs,
@@ -93,6 +89,7 @@ class FfmpegConvert(BaseParallelProcessor):
         self.media_file_key = media_file_key
         self.id_key = id_key
         self.resampled_audio_dir = resampled_audio_dir
+        self.base_dir = base_dir
         self.target_samplerate = target_samplerate
         self.target_nchannels = target_nchannels
 
@@ -106,6 +103,13 @@ class FfmpegConvert(BaseParallelProcessor):
             os.makedirs(os.path.join(self.resampled_audio_dir, key.split("/")[0]), exist_ok=True)
         else:
             key = os.path.splitext(input_file)[0].split("/")[-1]
+
+        if self.base_dir:
+            new_dir = os.path.dirname(os.path.relpath(input_file, self.base_dir))
+            os.makedirs(os.path.join(self.resampled_audio_dir, new_dir), exist_ok=True)
+
+            key = os.path.join(new_dir, key)
+
         audio = os.path.join(self.resampled_audio_dir, key) + ".wav"
 
         if not os.path.isfile(audio):
