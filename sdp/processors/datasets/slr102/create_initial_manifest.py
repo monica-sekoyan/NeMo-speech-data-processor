@@ -1,4 +1,4 @@
-# Copyright (c) 2024, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,9 +18,13 @@ import csv
 import glob
 import os
 from pathlib import Path
+from typing import Tuple
 
+import sox
 from sox import Transformer
+from tqdm.contrib.concurrent import process_map
 
+from sdp.logging import logger
 from sdp.processors.base_processor import BaseParallelProcessor, DataEntry
 from sdp.utils.common import download_file, extract_archive
 
@@ -40,15 +44,14 @@ class CreateInitialManifestSLR102(BaseParallelProcessor):
         extract_archive_dir (str): directory where the extracted data will be saved.
         resampled_audio_dir (str): directory where the resampled audio will be saved.
         data_split (str): "train", "dev" or "test".
-        target_samplerate (int): sample rate (Hz) to use for resampling.
-            Defaults to 16000.
-        target_nchannels (int): number of channels to create during resampling process.
-            Defaults to 1.
+        already_extracted (bool): if True, we will not try to extract the raw data.
+            Defaults to False.
     Returns:
         This processor generates an initial manifest file with the following fields::
 
             {
                 "audio_filepath": <path to the audio file>,
+                "duration": <duration of the audio in seconds>,
                 "text": <transcription (with capitalization and punctuation)>,
             }
     """
@@ -59,8 +62,8 @@ class CreateInitialManifestSLR102(BaseParallelProcessor):
         extract_archive_dir: str,
         resampled_audio_dir: str,
         data_split: str,
-        target_samplerate: int = 16000,
-        target_nchannels: int = 1,
+        target_samplerate: int,
+        target_nchannels: int,
         **kwargs,
     ):
         super().__init__(**kwargs)

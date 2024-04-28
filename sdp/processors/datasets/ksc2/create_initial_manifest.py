@@ -1,4 +1,4 @@
-# Copyright (c) 2024, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
 import csv
 import glob
 import os
-from collections import defaultdict
 from pathlib import Path
 from typing import Dict, Tuple
 
+import sox
 from sox import Transformer
 from tqdm.contrib.concurrent import process_map
 
@@ -30,9 +30,7 @@ from sdp.utils.common import download_file, extract_archive
 
 
 class CreateInitialManifestKSC2(BaseParallelProcessor):
-    """Processor to create initial manifest for the Kazakh Speech Corpus (KSC) 2.
-
-    The dataset should be requested via Google Forms, which can be found here https://issai.nu.edu.kz/kz-speech-corpus/.
+    """Processor to create initial manifest for the Kazakh Speech Corpus (KSC) 2
 
     Extracts raw data for the specified language and creates an initial manifest
     using the transcripts provided in the raw data.
@@ -42,17 +40,15 @@ class CreateInitialManifestKSC2(BaseParallelProcessor):
         extract_archive_dir (str): directory where the extracted data will be saved.
         resampled_audio_dir (str): directory where the resampled audio will be saved.
         data_split (str): "train", "dev" or "test".
-        target_samplerate (int): sample rate (Hz) to use for resampling.
-            Defaults to 16000.
-        target_nchannels (int): number of channels to create during resampling process.
-            Defaults to 1.
+        already_extracted (bool): if True, we will not try to extract the raw data.
+            Defaults to False.
     Returns:
-        This processor generates an initial manifest file with the following fields:
+        This processor generates an initial manifest file with the following fields::
 
             {
                 "audio_filepath": <path to the audio file>,
+                "duration": <duration of the audio in seconds>,
                 "text": <transcription (with capitalization and punctuation)>,
-                "source": <source of the given data>,
             }
     """
 
@@ -62,8 +58,8 @@ class CreateInitialManifestKSC2(BaseParallelProcessor):
         extract_archive_dir: str,
         resampled_audio_dir: str,
         data_split: str,
-        target_samplerate: int = 16000,
-        target_nchannels: int = 1,
+        target_samplerate: int,
+        target_nchannels: int,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -106,7 +102,7 @@ class CreateInitialManifestKSC2(BaseParallelProcessor):
 
         dataset_entries = []
 
-        without_text = defaultdict(int)
+        without_text = {}
 
         for audio_filepath in self.data_split_dir.rglob('*.flac'):
             filename = audio_filepath.stem
@@ -122,14 +118,18 @@ class CreateInitialManifestKSC2(BaseParallelProcessor):
                 with open(transcribed_filename, "rt", encoding="utf8") as txtfile:
                     text = ' '.join(txtfile.readlines())
             else:
-                without_text[audio_filepath.parent] += 1
+                without_text[audio_filepath.parent] = without_text.get(audio_filepath.parent, 0) + 1
+                print(filename)
+                print(transcribed_filename)
                 continue
 
             entry = {'audio_filepath': audio_filepath.as_posix(), 'text': text, 'source': source}
 
             dataset_entries.append(entry)
 
-        logger.info(f"Without text entries -> {without_text}")
+        print("=" * 50)
+        print("WITHOUT TEXT: ", without_text)
+        print("=" * 50)
 
         return dataset_entries
 
