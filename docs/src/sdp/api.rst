@@ -52,6 +52,14 @@ CORAAL
 .. autodata:: sdp.processors.TrainDevTestSplitCORAAL
    :annotation:
 
+
+Librispeech
+'''''''''''
+
+.. autodata:: sdp.processors.CreateInitialManifestLibrispeech
+   :annotation:
+   
+
 SLR83
 '''''
 
@@ -94,7 +102,8 @@ used in the downstream processing for additional enhancement or filtering.
 .. autodata:: sdp.processors.ASRWhisper
    :annotation:
 
-.. autodata:: sdp.processors.ASRTransformer
+
+.. autodata:: sdp.processors.ASRTransformers
    :annotation:
 
 Text-only processors
@@ -160,6 +169,12 @@ ASR-based processors
 
 Data modifications
 ''''''''''''''''''
+
+.. autodata:: sdp.processors.GetAudioDuration
+   :annotation:
+   
+.. autodata:: sdp.processors.SoxConvert
+   :annotation:
 
 .. autodata:: sdp.processors.InsIfASRInsertion
    :annotation:
@@ -236,14 +251,11 @@ Miscellaneous
 .. autodata:: sdp.processors.FfmpegConvert
    :annotation:
 
-.. autodata:: sdp.processors.Subprocess
-   :annotation:
 
 .. autodata:: sdp.processors.CreateInitialManifestByExt
    :annotation:
 
 .. _sdp-base-classes:
-
 Base classes
 ~~~~~~~~~~~~
 

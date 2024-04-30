@@ -1,6 +1,6 @@
 documentation: |
-  Text MCV
-  ########
+  Text MCV (Armenian)
+  ###################
 
   This config can be used to prepare text corpus to submit to Common Voice https://common-voice.github.io/community-playbook/sub_pages/text.html
 
@@ -16,7 +16,7 @@ documentation: |
 
   5. Replaces common transcription errors as well as "non-linguistic", "unintelligible" and "redacted" flags. 
 
-  6. Drops everything with non-armenean characters. 
+  6. Drops everything with non-Armenian characters. 
 
   7. Drops all utterances that are shorter than 3 words or longer than 15 words. 
 
@@ -32,17 +32,17 @@ documentation: |
   * **workspace_dir**: specify the workspace folder where all audio files will be stored.
 
   Note that you can customize any part of this config either directly or from command-line.
-  
+
   Here are some common customizations to consider:
 
   **Output format**.
 
   Output manifest `final_manifest.json` contain the following fields:
-  
+
   * **Sentence (str)**: text of sentence to vocalise.
-  
+
   * **Source (str)**: source book.
-  
+
   Output manifest ``manifest13.tsv`` contain the same data as ``final_manifest.json`` but in tsv format.
 
   Output manifest ``manifest14.tsv`` contain random subset of data from ``manifest13.json``. 
@@ -53,7 +53,7 @@ final_manifest: ${workspace_dir}/final_manifest.json
 
 processors:
   - _target_: sdp.processors.CreateInitialManifestByExt
-    raw_data_dir: ${workspace_dir}/arm_docs
+    raw_data_dir: ${workspace_dir}
     extension: txt
     output_file_key: source_filepath
     output_manifest_file: ${workspace_dir}/manifest0.json
@@ -86,6 +86,7 @@ processors:
 
   - _target_: sdp.processors.DropIfRegexMatch
     output_manifest_file: ${workspace_dir}/manifest5.json
+    text_key: text
     regex_patterns:
       - 'տիկ\. $'
       - 'Գ\. $'
@@ -107,6 +108,7 @@ processors:
 
   - _target_: sdp.processors.DropNonAlphabet
     output_manifest_file: ${workspace_dir}/manifest6.json
+    text_key: text
     alphabet: "՝՞՜՛`֊´’'՚-ԱԲԳԴԵԶԷԸԹԺԻԼԽԾԿՀՁՂՃՄՅՆՇՈՉՊՋՌՍՎՏՐՑՒՓՔՕՖՈՒԵ աբգդեզէըթժիլխծկհձղճմյնշոչպջռսվտրցւփքօֆուև,:\\.…;"
     test_cases:
       - {input: {text: "test тест Գրիմ եղբայրներ, անտառի տնակը, Ռուսերենից թարգմանեց, Ամալիյա Ուկասյանը."}, output: null}

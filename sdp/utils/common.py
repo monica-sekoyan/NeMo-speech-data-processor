@@ -69,6 +69,7 @@ def download_file(source_url: str, target_directory: str, verbose=True):
         if verbose:
             logger.info(f"Found file {target_filepath} => will not be attempting download from {source_url}")
     else:
+        logger.info(f"Not found file {target_filepath}")
         original_dir = os.getcwd()  # record current working directory so can cd back to it
         os.chdir(target_directory)  # cd to target dir so that temporary download file will be saved in target dir
 
