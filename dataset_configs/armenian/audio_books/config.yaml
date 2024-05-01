@@ -9,14 +9,11 @@ documentation: |
 
   1. Create initial manifest by collecting all avalible files with mp3 extension in raw_data_dir folder.
 
-
   2. Convert mp3 into wav format using the Ffmpeg suite, with a downsampling to a 16000 Hz sample rate and a unification of all audio channels into a mono track.
-
 
   3. Count duration for audio files in seconds and save it into duration field.
 
   4. Filter out broken files with duration shorter than 0 seconds. You can directly change the config file to control this.
-
 
   5. Predict transcription using a Whisper ASR model and save results into text field.
 
@@ -37,7 +34,6 @@ documentation: |
   * ``${workspace_dir}/final_manifest.json`` - final_manifest manifest with all the data.
 
   Output manifest contain the following fields:
-
 
   * **audio_filepath (str)**: relative path to the audio files.
 
@@ -60,7 +56,6 @@ processors:
 
   - _target_: sdp.processors.FfmpegConvert
     output_manifest_file: ${workspace_dir}/manifest1.json
-
     converted_audio_dir: ${workspace_dir}/audio
     target_samplerate: 16000
     target_nchannels: 1
@@ -70,7 +65,6 @@ processors:
 
   - _target_: sdp.processors.GetAudioDuration
     audio_filepath_key: audio_filepath
-
     duration_key: duration
     output_manifest_file: ${workspace_dir}/manifest2.json
 
@@ -87,14 +81,12 @@ processors:
     output_lang_key: lid
     pad_or_trim_length: 480000
 
-
   - _target_: sdp.processors.ASRTransformers # pip install accelerate transformers
     output_manifest_file: ${workspace_dir}/manifest5.json
     pretrained_model: "distil-whisper/distil-large-v2" #  distil-whisper/distil-large-v2 openai/whisper-large-v2
     generate_language: armenian
     generate_task: transcribe
     output_text_key: pred_text
-
 
   - _target_: sdp.processors.SubRegex
     output_manifest_file: ${final_manifest}

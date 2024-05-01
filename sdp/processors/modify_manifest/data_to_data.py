@@ -47,7 +47,6 @@ class GetAudioDuration(BaseParallelProcessor):
         **kwargs,
     ):
         super().__init__(**kwargs)
-
         self.audio_filepath_key = audio_filepath_key
         self.duration_key = duration_key
 

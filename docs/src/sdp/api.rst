@@ -102,7 +102,6 @@ used in the downstream processing for additional enhancement or filtering.
 .. autodata:: sdp.processors.ASRWhisper
    :annotation:
 
-
 .. autodata:: sdp.processors.ASRTransformers
    :annotation:
 
@@ -251,11 +250,11 @@ Miscellaneous
 .. autodata:: sdp.processors.FfmpegConvert
    :annotation:
 
-
 .. autodata:: sdp.processors.CreateInitialManifestByExt
    :annotation:
 
 .. _sdp-base-classes:
+
 Base classes
 ~~~~~~~~~~~~
 

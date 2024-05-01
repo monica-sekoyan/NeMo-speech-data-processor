@@ -150,7 +150,6 @@ Corpus based on Armenian audiobooks
 .. toctree::
    :hidden:
 
-
    config-docs/armenian/audio_books/config
 
 English LibriSpeech (ELS)
