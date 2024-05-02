@@ -32,28 +32,32 @@ from sdp.utils.common import download_file, extract_archive
 class CreateInitialManifestKSC2(BaseParallelProcessor):
     """Processor to create initial manifest for the Kazakh Speech Corpus (KSC) 2.
 
-    The dataset should be requested via Google Forms, which can be found here https://issai.nu.edu.kz/kz-speech-corpus/.
+        The dataset should be requested via Google Forms, which can be found here https://issai.nu.edu.kz/kz-speech-corpus/.
 
-    Extracts raw data for the specified language and creates an initial manifest
-    using the transcripts provided in the raw data.
+        Extracts raw data for the specified language and creates an initial manifest
+        using the transcripts provided in the raw data.
 
-    Args:
-        raw_data_dir (str): the path to the directory containing the raw data archive file.
-        extract_archive_dir (str): directory where the extracted data will be saved.
-        resampled_audio_dir (str): directory where the resampled audio will be saved.
-        data_split (str): "train", "dev" or "test".
-        target_samplerate (int): sample rate (Hz) to use for resampling.
-            Defaults to 16000.
-        target_nchannels (int): number of channels to create during resampling process.
-            Defaults to 1.
-    Returns:
-        This processor generates an initial manifest file with the following fields:
+        Args:
+            raw_data_dir (str): the path to the directory containing the raw data archive file.
+            extract_archive_dir (str): directory where the extracted data will be saved.
+            resampled_audio_dir (str): directory where the resampled audio will be saved.
+            data_split (str): "train", "dev" or "test".
+            target_samplerate (int): sample rate (Hz) to use for resampling.
+                Defaults to 16000.
+            target_nchannels (int): number of channels to create during resampling process.
+                Defaults to 1.
+        Returns:
+            This processor generates an initial manifest file with the following fields:
 
-            {
-                "audio_filepath": <path to the audio file>,
-                "text": <transcription (with capitalization and punctuation)>,
-                "source": <source of the given data>,
-            }
+                {
+                    "audio_filepath": <path to the audio file>,
+                    "text": <transcription (with capitalization and punctuation)>,
+    <<<<<<< HEAD
+                    "source": <source of the given data>,
+    =======
+                    "soutce": <source of the given data>,
+    >>>>>>> b554353 (correct copyright date)
+                }
     """
 
     def __init__(
