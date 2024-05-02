@@ -1,4 +1,4 @@
-# Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2024, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,15 +40,17 @@ class CreateInitialManifestKSC2(BaseParallelProcessor):
         extract_archive_dir (str): directory where the extracted data will be saved.
         resampled_audio_dir (str): directory where the resampled audio will be saved.
         data_split (str): "train", "dev" or "test".
-        already_extracted (bool): if True, we will not try to extract the raw data.
-            Defaults to False.
+        target_samplerate (int): sample rate (Hz) to use for resampling.
+            Defaults to 16000.
+        target_nchannels (int): number of channels to create during resampling process.
+            Defaults to 1.
     Returns:
         This processor generates an initial manifest file with the following fields::
 
             {
                 "audio_filepath": <path to the audio file>,
-                "duration": <duration of the audio in seconds>,
                 "text": <transcription (with capitalization and punctuation)>,
+                "soutce": <source of the given data>,
             }
     """
 
@@ -58,8 +60,8 @@ class CreateInitialManifestKSC2(BaseParallelProcessor):
         extract_archive_dir: str,
         resampled_audio_dir: str,
         data_split: str,
-        target_samplerate: int,
-        target_nchannels: int,
+        target_samplerate: int = 16000,
+        target_nchannels: int = 1,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -119,17 +121,13 @@ class CreateInitialManifestKSC2(BaseParallelProcessor):
                     text = ' '.join(txtfile.readlines())
             else:
                 without_text[audio_filepath.parent] = without_text.get(audio_filepath.parent, 0) + 1
-                print(filename)
-                print(transcribed_filename)
                 continue
 
             entry = {'audio_filepath': audio_filepath.as_posix(), 'text': text, 'source': source}
 
             dataset_entries.append(entry)
 
-        print("=" * 50)
-        print("WITHOUT TEXT: ", without_text)
-        print("=" * 50)
+        logger.info(f"Without text entries -> {without_text}")
 
         return dataset_entries
 
