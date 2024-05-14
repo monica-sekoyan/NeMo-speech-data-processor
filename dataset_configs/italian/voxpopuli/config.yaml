@@ -1,0 +1,158 @@
+documentation: |
+  VoxPopuli Italian
+  #################
+
+  This config can be used to prepare `VoxPopuli <https://github.com/facebookresearch/voxpopuli>`_
+  Italian data in the NeMo format with restored punctuation and capitalization (P&C).
+
+  It performs the following data processing.
+
+  1. Installs requirements and runs the scripts from https://github.com/facebookresearch/voxpopuli
+     to get initial data.
+  2. Converts all audio files into the wav format and generates initial nemo manifest file.
+  3. Original VoxPopuli data has P&C, but in a non-normalized format.
+     We match the normalized and non-normalized versions to restore P&C in the normalized form.
+  4. Replaces certain non-supported characters and punctuation marks with equivalent supported versions.
+  5. Drops any data that contains symbols not in the supported alphabet.
+  6. For training subset, the following additional filtering is performed:
+
+     a. Runs ASR inference with an older model and drops all utterances which contain more than
+        5 consecutive word insertions or deletions. 5 was found to be a good threshold to filter
+        out incorrect transcriptions.
+     b. Drops all utterances with duration less than 1.5 seconds, as they are often incorrectly transcribed.
+
+  **Required arguments**.
+
+  * **workspace_dir**: specify the workspace folder where all audio files will be stored.
+  * **data_split**: can be "train", "dev" or "test".
+
+  Note that you can customize any part of this config either directly or from command-line.
+  Here are some common customizations to consider:
+
+  * **remove_pc**: set to True if P&C is not needed. Defaults to False.
+
+  **Output format**.
+
+  This config dumps the final manifest at ``${workspace_dir}/${data_split}_manifest.json``.
+  The output manifest contains the following fields:
+
+  * **audio_filepath (str)**: relative path to the audio files.
+  * **text (str)**: transcription, including punctuation ".,?" and capitalization.
+  * **duration (float)**: audio duration in seconds.
+
+processors_to_run: all
+data_split: ???
+workspace_dir: ???
+final_manifest: ${workspace_dir}/${data_split}_manifest.json
+remove_pc: False
+
+run_filtering:
+  train: True
+  # disabling dropping data for dev/test
+  dev: False
+  test: False
+
+processors:
+  - _target_: sdp.processors.CreateInitialManifestVoxpopuli
+    output_manifest_file: ${workspace_dir}/${data_split}_manifest0.json
+    language_id: it
+    raw_data_dir: ${workspace_dir}/raw_data
+    resampled_audio_dir: ${workspace_dir}/${data_split}/audio
+    data_split: ${data_split}
+
+  - _target_: sdp.processors.DuplicateFields
+    should_run: ${not:${remove_pc}}
+    duplicate_fields:
+      "text": "provided_norm_text"
+
+  - _target_: sdp.processors.NormalizeFromNonPCTextVoxpopuli
+    should_run: ${not:${remove_pc}}
+    test_cases:
+      - {input: {raw_text: "¿So, it's ¿62.3 Abc Abc?",
+                 provided_norm_text: "so it's six two point three abc abc"},
+         output: {raw_text: "¿So, it's ¿62.3 Abc Abc?",
+                  text: "¿So, it's ¿six two point three Abc Abc?",
+                  provided_norm_text: "so it's six two point three abc abc"}}
+
+  - _target_: sdp.processors.SubRegex
+    regex_params_list:
+      - {"pattern": "!", "repl": "."}
+      - {"pattern": "…", "repl": "."}
+      - {"pattern": "’", "repl": "'"}
+      - {"pattern": '[!\":\(\)“”;]', "repl": ''}
+      - {"pattern": "[-/]", "repl": " "}
+      # note that we exclude î and ó - according to wikipedia they are very
+      # rarely used in modern italian. So it's safer to replace them, as they
+      # often represent other languages (e.g., french or spanish, most often
+      # in names), rather than actual italian
+      - {"pattern": "î", "repl": "i"}
+      - {"pattern": "ó", "repl": "o"}
+      - {"pattern": "Î", "repl": "I"}
+      - {"pattern": "Ó", "repl": "O"}
+    test_cases:
+      - {input: {text: "Wow!"}, output: {text: "Wow."}}
+
+  - _target_: sdp.processors.DropNonAlphabet
+    alphabet: ".,? 'abcdefghijklmnopqrstuvwxyzàèéìíòùúABCDEFGHIJKLMNOPQRSTUVWXYZÀÈÉÌÍÒÙÚ"
+    test_cases:
+      - {input: {text: "test тест 测试"}, output: null}
+      - {input: {text: "test"}, output: {text: "test"}}
+
+  # --------------------- only runs in training --------------------------
+
+  - _target_: sdp.processors.ASRInference
+    pretrained_model: "stt_it_quartznet15x5"
+    output_manifest_file: "${workspace_dir}/${data_split}_manifest_with_preds.json"
+    should_run: ${subfield:${run_filtering},${data_split}}
+
+  - _target_: sdp.processors.DuplicateFields
+    duplicate_fields:
+      "text": "text_no_pc"
+    should_run: ${subfield:${run_filtering},${data_split}}
+
+  - _target_: sdp.processors.SubMakeLowercase
+    text_key: "text_no_pc"
+    should_run: ${subfield:${run_filtering},${data_split}}
+
+  - _target_: sdp.processors.SubRegex
+    text_key: "text_no_pc"
+    regex_params_list:
+    - {"pattern": '[\?\.,]', "repl": ""}
+    should_run: ${subfield:${run_filtering},${data_split}}
+
+  - _target_: sdp.processors.DropASRError
+    consecutive_words_threshold: 5
+    text_key: "text_no_pc"
+    should_run: ${subfield:${run_filtering},${data_split}}
+
+  - _target_: sdp.processors.DropHighLowDuration
+    high_duration_threshold: 999
+    low_duration_threshold: 1.5
+    should_run: ${subfield:${run_filtering},${data_split}}
+
+  # ----------------------------------------------------------------------
+
+  # ------------------------ if P&C is not needed ------------------------
+
+  - _target_: sdp.processors.SubMakeLowercase
+    should_run: ${remove_pc}
+
+  - _target_: sdp.processors.SubRegex
+    should_run: ${remove_pc}
+    regex_params_list:
+      - {"pattern": '[\?\.,]', "repl": ""}
+    test_cases:
+      - {input: {text: "test."}, output: {text: "test"}}
+      - {input: {text: "t,e?st. ah."}, output: {text: "test ah"}}
+
+  # ----------------------------------------------------------------------
+
+  - _target_: sdp.processors.ChangeToRelativePath
+    base_dir: ${workspace_dir}
+
+  - _target_: sdp.processors.KeepOnlySpecifiedFields
+    output_manifest_file: ${final_manifest}
+    fields_to_keep:
+      - audio_filepath
+      - text
+      - duration
