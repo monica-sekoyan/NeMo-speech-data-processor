@@ -52,13 +52,32 @@ CORAAL
 .. autodata:: sdp.processors.TrainDevTestSplitCORAAL
    :annotation:
 
-
 Librispeech
 '''''''''''
 
 .. autodata:: sdp.processors.CreateInitialManifestLibrispeech
    :annotation:
-   
+
+KSC2
+'''''''''''
+
+.. autodata:: sdp.processors.CreateInitialManifestKSC2
+   :annotation:
+
+SLR140
+'''''''''''
+
+.. autodata:: sdp.processors.CreateInitialManifestSLR140
+   :annotation:
+
+.. autodata:: sdp.processors.CustomDataSplitSLR140
+   :annotation:
+
+SLR102
+'''''''''''
+
+.. autodata:: sdp.processors.CreateInitialManifestSLR102
+   :annotation:
 
 SLR83
 '''''
