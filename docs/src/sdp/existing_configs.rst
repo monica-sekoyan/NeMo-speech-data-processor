@@ -186,6 +186,7 @@ English LibriSpeech (ELS)
    
    config-docs/english/librispeech/config
 
+
 Coraa Brazilian Portuguese dataset
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -193,6 +194,14 @@ Coraa Brazilian Portuguese dataset
 
 `config <https://github.com/NVIDIA/NeMo-speech-data-processor/blob/main/dataset_configs/portuguese/coraa/config.yaml>`__ |
 :doc:`documentation <config-docs/portuguese/coraa/config>`
+
+Kazakh Speech Dataset (SLR140)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Dataset link:** https://www.openslr.org/140/
+
+`config <https://github.com/NVIDIA/NeMo-speech-data-processor/blob/main/dataset_configs/kazakh/slr140/config.yaml>`__ |
+:doc:`documentation <config-docs/kazakh/slr140/config>`
 
 .. toctree::
    :hidden:
@@ -209,9 +218,34 @@ MTEDx
 * **Portuguese**:
   `config <https://github.com/NVIDIA/NeMo-speech-data-processor/blob/main/dataset_configs/portuguese/mtedx/config.yaml>`__ |
   :doc:`documentation <config-docs/portuguese/mtedx/config>`
+   config-docs/kazakh/slr140/config
+
+Kazakh Speech Corpus (SLR102)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Dataset link:** https://www.openslr.org/102/
+
+`config <https://github.com/NVIDIA/NeMo-speech-data-processor/blob/main/dataset_configs/kazakh/slr102/config.yaml>`__ |
+:doc:`documentation <config-docs/kazakh/slr102/config>`
 
 .. toctree::
    :hidden:
 
    config-docs/portuguese/mtedx/config
+   config-docs/kazakh/slr102/config
+
+Kazakh Speech Corpus 2 (KSC2)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Dataset link:** https://issai.nu.edu.kz/kz-speech-corpus/
+
+**Required manual steps:** You need to request the dataset from the website and after getting approval download it manually from Dropbox.
+
+`config <https://github.com/NVIDIA/NeMo-speech-data-processor/blob/main/dataset_configs/kazakh/ksc2/config.yaml>`__ |
+:doc:`documentation <config-docs/kazakh/ksc2/config>`
+
+.. toctree::
+   :hidden:
+
+   config-docs/kazakh/ksc2/config
 
