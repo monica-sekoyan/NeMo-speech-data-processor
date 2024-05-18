@@ -102,7 +102,6 @@ class CreateInitialManifestMCV(BaseParallelProcessor):
                 )
 
             data_folder = extract_archive(tar_gz_files[0], self.extract_archive_dir)
-
             self.transcription_file = Path(data_folder)
         else:
             self.transcription_file = Path(self.extract_archive_dir) / self.language_id

@@ -31,6 +31,9 @@ download the data archive and specify its location with the ``raw_data_dir`` par
 * **Portuguese**:
   `config <https://github.com/NVIDIA/NeMo-speech-data-processor/blob/main/dataset_configs/portuguese/mcv/config.yaml>`__ |
   :doc:`documentation <config-docs/portuguese/mcv/config>`
+* **Kazakh**:
+  `config <https://github.com/NVIDIA/NeMo-speech-data-processor/blob/main/dataset_configs/kazakh/mcv/config.yaml>`__ |
+  :doc:`documentation <config-docs/kazakh/mcv/config>`
 
 .. toctree:: 
    :hidden:
@@ -38,6 +41,7 @@ download the data archive and specify its location with the ``raw_data_dir`` par
    config-docs/italian/mcv/config
    config-docs/spanish_pc/mcv12/config
    config-docs/portuguese/mcv/config
+   config-docs/kazakh/mcv/config
 
 Multilingual LibriSpeech (MLS)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -186,7 +190,6 @@ English LibriSpeech (ELS)
    
    config-docs/english/librispeech/config
 
-
 Coraa Brazilian Portuguese dataset
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -194,14 +197,6 @@ Coraa Brazilian Portuguese dataset
 
 `config <https://github.com/NVIDIA/NeMo-speech-data-processor/blob/main/dataset_configs/portuguese/coraa/config.yaml>`__ |
 :doc:`documentation <config-docs/portuguese/coraa/config>`
-
-Kazakh Speech Dataset (SLR140)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Dataset link:** https://www.openslr.org/140/
-
-`config <https://github.com/NVIDIA/NeMo-speech-data-processor/blob/main/dataset_configs/kazakh/slr140/config.yaml>`__ |
-:doc:`documentation <config-docs/kazakh/slr140/config>`
 
 .. toctree::
    :hidden:
@@ -218,6 +213,23 @@ MTEDx
 * **Portuguese**:
   `config <https://github.com/NVIDIA/NeMo-speech-data-processor/blob/main/dataset_configs/portuguese/mtedx/config.yaml>`__ |
   :doc:`documentation <config-docs/portuguese/mtedx/config>`
+
+.. toctree::
+   :hidden:
+
+   config-docs/portuguese/mtedx/config
+
+Kazakh Speech Dataset (SLR140)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Dataset link:** https://www.openslr.org/140/
+
+`config <https://github.com/NVIDIA/NeMo-speech-data-processor/blob/main/dataset_configs/kazakh/slr140/config.yaml>`__ |
+:doc:`documentation <config-docs/kazakh/slr140/config>`
+
+.. toctree::
+   :hidden:
+
    config-docs/kazakh/slr140/config
 
 Kazakh Speech Corpus (SLR102)
@@ -231,7 +243,6 @@ Kazakh Speech Corpus (SLR102)
 .. toctree::
    :hidden:
 
-   config-docs/portuguese/mtedx/config
    config-docs/kazakh/slr102/config
 
 Kazakh Speech Corpus 2 (KSC2)
