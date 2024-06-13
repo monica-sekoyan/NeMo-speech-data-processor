@@ -139,6 +139,9 @@ def run_processors(cfg):
                 with open_dict(processors_cfgs[idx + 1]):
                     processors_cfgs[idx + 1]["input_manifest_file"] = processor_cfg["output_manifest_file"]
 
+
+            print(processor_cfg)
+
             processor = hydra.utils.instantiate(processor_cfg)
             # running runtime tests to fail right-away if something is not
             # matching users expectations
