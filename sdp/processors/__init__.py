@@ -81,6 +81,7 @@ from sdp.processors.modify_manifest.data_to_data import (
     GetCER,
     GetEdgeCER,
     GetLenDiffRatio,
+    RemoveEmojis,
 )
 from sdp.processors.modify_manifest.data_to_dropbool import (
     DropASRError,
@@ -103,3 +104,6 @@ from sdp.processors.modify_manifest.make_letters_uppercase_after_period import (
 )
 from sdp.processors.nemo.asr_inference import ASRInference, ASRInferenceParallel
 from sdp.processors.nemo.pc_inference import PCInference
+
+
+from sdp.processors.datasets.audio_segments.check_audio import ConvertAudiosToFlac

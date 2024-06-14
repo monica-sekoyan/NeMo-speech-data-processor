@@ -987,3 +987,88 @@ class GetLenDiffRatio(BaseParallelProcessor):
             logger.info("Total audio duration (hours) after processing: %.2f", self.total_duration / 3600)
 
         logger.info(f"Mean Text Length Difference Ratio (in words): {round(self.words_len_diff_ratio_sum / self.number_of_entries, 2)}%")
+
+
+class RemoveEmojis(BaseParallelProcessor):
+    """Converts a regex match to a string, as defined by key-value pairs in ``regex_to_sub``.
+
+    Before applying regex changes, we will add a space
+    character to the beginning and end of the ``text`` and ``pred_text``
+    keys for each data entry. After the the regex changes,
+    the extra spaces are removed. This includes the spaces in the beginning
+    and end of the text, as well as any double spaces ``"  "``.
+
+    Args:
+        regex_params_list (list[dict]): list of dicts.
+            Each dict must contain a ``pattern`` and a ``repl`` key,
+            and optionally a ``count`` key (by default, ``count`` will be 0).
+            This processor will go through the list in order, and apply a ``re.sub`` operation on
+            the input text in ``data_entry[self.text_key]``, feeding in the specified ``pattern``, ``repl``
+            and ``count`` parameters to ``re.sub``.
+        text_key (str): a string indicating which key of the data entries
+            should be used to find the utterance transcript. Defaults to "text".
+
+    Returns:
+         The same data as in the input manifest with ``<text_key>`` field changed.
+    """
+
+    EMOJI_PATTERN = re.compile(
+        r" ?[\U0001F600-\U0001F64F"  # emoticons
+        r"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        r"\U0001F680-\U0001F6FF"  # transport & map symbols
+        r"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+        r"\U00002500-\U00002BEF"  # Chinese characters
+        r"\U00002702-\U000027B0"
+        r"\U00002702-\U000027B0"
+        r"\U000024C2-\U0001F251"
+        r"\U0001f926-\U0001f937"
+        r"\U00010000-\U0010ffff"
+        r"\u2640-\u2642"
+        r"\u2600-\u2B55"
+        r"\u200d"
+        r"\u23cf"
+        r"\u23e9"
+        r"\u231a"
+        r"\ufe0f"  # dingbats
+        r"\u3030"
+        r"]+", flags=re.UNICODE)
+
+
+    def __init__(
+        self,
+        text_key: str = "text",
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.text_key = text_key
+
+        # verify all dicts in regex_params_list have "pattern" and "repl" keys
+
+
+    def process_dataset_entry(self, data_entry) -> List:
+        """Replaces each found regex match with a given string."""
+        replace_word_counter = 0
+
+        text_in = data_entry[self.text_key]
+
+        text_in = add_start_end_spaces(text_in)
+        text_out = re.sub(
+                self.EMOJI_PATTERN,
+                repl='',
+                string=text_in,
+                # note: this count param is the maximum number of pattern occurrences to be replaced.
+        )
+
+        if text_in != text_out:
+            replace_word_counter += 1
+        text_in = text_out
+
+        text_out = remove_extra_spaces(text_out)
+
+        data_entry[self.text_key] = text_out
+
+        return [DataEntry(data=data_entry, metrics=replace_word_counter)]
+
+    def finalize(self, metrics):
+        """Reports how many substitutions were made for each pattern."""
+        super().finalize(metrics)

@@ -44,7 +44,7 @@ class ASRInference(BaseProcessor):
     def __init__(
         self,
         pretrained_model: str,
-        batch_size: int = 32,
+        batch_size: int = 64,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -60,6 +60,7 @@ class ASRInference(BaseProcessor):
                 f"python {self.script_path} "
                 f"model_path={self.pretrained_model} "
                 f"dataset_manifest={self.input_manifest_file} "
+                f"+presort_manifest=false "
                 f"output_filename={self.output_manifest_file} "
                 f"batch_size={self.batch_size} ",
                 shell=True,
