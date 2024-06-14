@@ -1,0 +1,107 @@
+processors_to_run: all
+input_manifest: ???
+final_manifest: /home/msekoyan/suno_manifests/part_1_final_manifest.json
+drop_pauses: True
+group_duration_threshold: 20.0
+drop_interviewers: True
+
+processors:
+
+  - _target_: sdp.processors.RenameFields
+    input_manifest_file: ${input_manifest}
+    rename_fields: {"duration_s": "duration"}
+
+  - _target_: sdp.processors.SubRegex
+    regex_params_list:
+      # removing non-linguistic markers
+      - {"pattern": ' ?\([^\)]+\)', "repl": ""}
+      - {"pattern": ' ?{[^}]+}', "repl": ""}
+      - {"pattern": ' ?{[^}]+}', "repl": ""}
+      # removing characters not in vocabulary
+      - {"pattern": "’", "repl": "'"}
+      - {"pattern": "？", "repl": "?"}
+      - {"pattern": "ʻ", "repl": ""}
+      - {"pattern": '/(.*?)/', "repl": ""}
+      - {"pattern": '，', "repl": ","}
+      - {"pattern": '！', "repl": "!"}
+      - {"pattern": '\*.*?\*', "repl": "!"}
+      - {"pattern": '_', "repl": " "}
+      # can customize if you need to retain some punctuation characters
+      - {"pattern": '(?<=<cs>)\*', "repl": ''}
+      - {"pattern": '[\[\]\\":\\(\)“”;""]', "repl": ''}
+      - {"pattern": "[-−—/]", "repl": " "}
+      - {"pattern": "=", "repl": ""}
+      # double space to single space
+      - {"pattern": "♫", "repl": ""}
+      - {"pattern": '[\|]', "repl": "<cs>"}
+      - {"pattern": '%', "repl": " percent"}
+      - {"pattern": "  ", "repl": " "}
+      - {"pattern": '\&', "repl": " and "}
+      - {"pattern": '\+', "repl": " plus "}
+      - {"pattern": '\%', "repl": " percent "}
+      - {"pattern": '\s+', "repl": " "}
+      - {"pattern": '\s+\.', "repl": "."}
+      - {"pattern": '\?+', "repl": "?"}
+      - {"pattern": '\.+', "repl": "."}
+      - {"pattern": ',+', "repl": ","}
+      - {"pattern": '!+', "repl": "!"}
+    test_cases:
+      - {input: {text: "something (pause 0.17) else"}, output: {text: "something else"}}
+      - {input: {text: "something {pause 0.17} else"}, output: {text: "something else"}}
+      - {input: {text: "something /unintelligible/ else /inaudible/ w"}, output: {text: "something else w"}}
+      - {input: {text: "something /else/"}, output: {text: "something"}}
+      - {input: {text: "something [els]e"}, output: {text: "something else"}}
+      - {input: {text: "something one talking | another one talking"}, output: {text: "something one talking <cs> another one talking"}}
+      - {input: {text: "least there's no lightning!<cs>* Uhoh."}, output: {text: "least there's no lightning!<cs> Uhoh."}}
+
+  - _target_: sdp.processors.RemoveEmojis
+
+  - _target_: sdp.processors.DropNonAlphabet
+    alphabet: "',.?!<>1234567890$€¥£元₩ ABCDEFGHIJKLMNOPQRSTUVWXYabcdefghijklmnopqrstuvwxyz"
+    output_manifest_file: /home/msekoyan/suno_manifest/intermediate_manifest_2.json
+    test_cases:
+      - {input: {text: "test тест 测试"}, output: null}
+      - {input: {text: "test"}, output: {text: "test"}}
+
+  - _target_: sdp.processors.ConvertAudiosToFlac
+    audio_dir: /mnt/md0/suno_20k_pc
+    new_audio_dir: /mnt/md0/suno_20k_pc/part1_audios
+    # output_manifest_file: /home/msekoyan/suno_manifest/intermediate_manifest_2.json
+
+  - _target_: sdp.processors.DropHighLowDuration
+    # input_manifest_file: ${input_manifest}
+    low_duration_threshold: 2
+    high_duration_threshold: 50
+    output_manifest_file: /home/msekoyan/suno_manifest/intermediate_manifest_2.json
+
+  # - _target_: sdp.processors.ASRInference
+  #   pretrained_model: /home/msekoyan/projects/NeMo/test_suno/parakeet-ctc-0.6b.nemo
+  #   output_manifest_file: ${final_manifest}
+  #   batch_size: 32
+
+  # - _target_: sdp.processors.NormalizeTextWithAudio
+  #   output_manifest_file: ${workspace_dir}/normalized_manifest.json
+  #   input_text_field: 'text'
+  #   pred_text_field: 'pred_text'
+
+  # - _target_: sdp.processors.DropNonAlphabet
+  #   alphabet: "',.?!<> ABCDEFGHIJKLMNOPQRSTUVWXYabcdefghijklmnopqrstuvwxyz"
+  #   output_manifest_file: ${final_manifest}
+  #   test_cases:
+  #     - {input: {text: "test тест 测试"}, output: null}
+  #     - {input: {text: "test"}, output: {text: "test"}}
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
