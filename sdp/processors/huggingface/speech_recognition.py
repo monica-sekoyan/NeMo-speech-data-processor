@@ -171,6 +171,7 @@ class ASRTransformers(BaseProcessor):
     def process(self):
         json_list = load_manifest(Path(self.input_manifest_file))
         json_list_sorted = sorted(json_list, key=lambda d: d[self.input_duration_key], reverse=True)
+        parent_dir = Path(self.input_manifest_file).parent.as_posix()
 
         Path(self.output_manifest_file).parent.mkdir(exist_ok=True, parents=True)
 
