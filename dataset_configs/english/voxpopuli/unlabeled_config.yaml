@@ -1,0 +1,13 @@
+processors_to_run: all
+workspace_dir: ???
+language_id: ???
+resampled_audio_dir: ???
+output_manifest_file: ???
+
+processors:
+  - _target_: sdp.processors.CreateInitialManifestVoxpopuliUnlabelled
+    raw_data_dir: ${workspace_dir}
+    language_id: ${language_id}
+    resampled_audio_dir: ${resampled_audio_dir}
+    output_manifest_file: ${output_manifest_file}
+
