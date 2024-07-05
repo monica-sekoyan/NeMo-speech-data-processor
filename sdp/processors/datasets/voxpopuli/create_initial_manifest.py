@@ -16,6 +16,7 @@ import os
 import subprocess
 from pathlib import Path
 
+import soundfile as sf
 import sox
 from sox import Transformer
 
@@ -252,16 +253,27 @@ class CreateInitialManifestVoxpopuliUnlabelled(BaseParallelProcessor):
     def process_dataset_entry(self, data_entry: str):
         tgt_flac_path = os.path.join(self.resampled_audio_dir, data_entry.stem + ".flac")
 
-        if not os.path.exists(self.resampled_audio_dir):
-            os.makedirs(self.resampled_audio_dir, exist_ok=True)
-        if not os.path.exists(tgt_flac_path):
-            tfm = Transformer()
-            tfm.rate(samplerate=self.target_samplerate)
-            tfm.channels(n_channels=self.target_nchannels)
-            tfm.build(input_filepath=data_entry, output_filepath=tgt_flac_path)
+        try:
+            data, samplerate = sf.read(data_entry)
 
-        data = {
-            "audio_filepath": tgt_flac_path,
-            "duration": float(sox.file_info.duration(tgt_flac_path)),
-        }
+            if data[1] != self.target_samplerate:
+                data = data[:, : self.target_samplerate]
+
+            duration = data.shape[0] / samplerate
+
+            if not os.path.exists(self.resampled_audio_dir):
+                os.makedirs(self.resampled_audio_dir, exist_ok=True)
+
+            if not os.path.exists(tgt_flac_path):
+                sf.write(tgt_flac_path, data, self.target_samplerate)
+
+            data = {
+                "audio_filepath": tgt_flac_path,
+                "duration": duration,
+            }
+        except Exception as e:
+            print(e)
+            print(data_entry)
+            data = None
+
         return [DataEntry(data=data)]
