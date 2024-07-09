@@ -256,8 +256,8 @@ class CreateInitialManifestVoxpopuliUnlabelled(BaseParallelProcessor):
         try:
             data, samplerate = sf.read(data_entry)
 
-            if data[1] != self.target_samplerate:
-                data = data[:, : self.target_samplerate]
+            if data.ndim > self.target_nchannels:
+                data = data[:, : self.target_nchannels]
 
             duration = data.shape[0] / samplerate
 
