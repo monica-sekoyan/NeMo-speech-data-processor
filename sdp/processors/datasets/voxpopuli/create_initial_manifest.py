@@ -18,6 +18,7 @@ from pathlib import Path
 
 import soundfile as sf
 import sox
+from pydub import AudioSegment
 from sox import Transformer
 
 from sdp.logging import logger
@@ -254,22 +255,23 @@ class CreateInitialManifestVoxpopuliUnlabelled(BaseParallelProcessor):
         tgt_flac_path = os.path.join(self.resampled_audio_dir, data_entry.stem + ".flac")
 
         try:
-            data, samplerate = sf.read(data_entry)
+            audio = AudioSegment.from_ogg(data_entry)
 
-            if data.ndim > self.target_nchannels:
-                data = data[:, : self.target_nchannels]
+            if audio.frame_rate != self.target_samplerate:
+                audio = audio.set_frame_rate(self.target_samplerate)
 
-            duration = data.shape[0] / samplerate
+            if audio.channels != self.target_nchannels:
+                return NotImplementedError
 
             if not os.path.exists(self.resampled_audio_dir):
                 os.makedirs(self.resampled_audio_dir, exist_ok=True)
 
             if not os.path.exists(tgt_flac_path):
-                sf.write(tgt_flac_path, data, self.target_samplerate)
+                audio.export(tgt_flac_path, format="flac", codec="libvorbis")
 
             data = {
                 "audio_filepath": tgt_flac_path,
-                "duration": duration,
+                "duration": audio.duration_seconds,
             }
         except Exception as e:
             print(e)
