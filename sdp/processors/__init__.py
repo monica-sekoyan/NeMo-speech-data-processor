@@ -73,12 +73,14 @@ from sdp.processors.modify_manifest.data_to_data import (
     FfmpegConvert,
     GetAudioDuration,
     InsIfASRInsertion,
+    RandomSegment,
     ReadTxtLines,
     SoxConvert,
     SplitLineBySentence,
     SubIfASRSubstitution,
     SubMakeLowercase,
     SubRegex,
+    UntarAudios,
 )
 from sdp.processors.modify_manifest.data_to_dropbool import (
     DropASRError,

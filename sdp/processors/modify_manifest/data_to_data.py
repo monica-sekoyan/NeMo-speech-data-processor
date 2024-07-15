@@ -13,12 +13,16 @@
 # limitations under the License.
 
 import collections
+import itertools
 import os
+import random
 import re
+from pathlib import Path
 from typing import Dict, List
 
 import soundfile
 from sox import Transformer
+from tqdm.contrib.concurrent import process_map
 
 from sdp.logging import logger
 from sdp.processors.base_processor import BaseParallelProcessor, DataEntry
@@ -586,3 +590,141 @@ class SubRegex(BaseParallelProcessor):
         for word, count in total_counter_sorted.items():
             logger.info(f"{word} {count}")
         super().finalize(metrics)
+
+
+class RandomSegment(BaseParallelProcessor):
+    """
+    Processor for converting video or audio files to audio using FFmpeg and updating the dataset with the path to the resampled audio.
+    If ``id_key`` is not None, the output file path will be ``<resampled_audio_dir>/<id_key>.wav``.
+    If ``id_key`` is None, the output file path will be ``<resampled_audio_dir>/<input file name without extension>.wav``.
+
+    .. note:: ``id_key`` can be used to create subdirectories inside ``resampled_audio_dir`` (by using forward slashes ``/``).
+        e.g. if ``id_key`` takes the form ``dir_name1/dir_name2/filename``, the output file path will be
+
+        ``<resampled_audio_dir>/dir_name1/dirname2/filename.wav``.
+
+    Args:
+        converted_audio_dir (str): The directory to store the resampled audio files.
+        input_file_key (str): The field in the dataset representing the path to the input video or audio files.
+        output_file_key (str): The field in the dataset representing the path to the resampled audio files with ``output_format``. If ``id_key`` is None, the output file path will be ``<resampled_audio_dir>/<input file name without extension>.wav``.
+        id_key (str): (Optional) The field in the dataset representing the unique ID or identifier for each entry. If ``id_key`` is not None, the output file path will be ``<resampled_audio_dir>/<id_key>.wav``. Defaults to None.
+        output_format (str): (Optional) Format of the output audio files. Defaults to `wav`.
+        target_samplerate (int): (Optional) The target sampling rate for the resampled audio. Defaults to 16000.
+        target_nchannels (int): (Optional) The target number of channels for the resampled audio. Defaults to 1.
+        **kwargs: Additional keyword arguments to be passed to the base class `BaseParallelProcessor`.
+
+    """
+
+    def __init__(
+        self,
+        min_duration: float,
+        max_duration: float,
+        resampled_audio_dir: str,
+        audio_format: str = None,
+        audio_filepath_key: str = 'audio_filepath',
+        save_other_part: bool = True,
+        random_seed: int = 1000,
+        target_samplerate: int = 16000,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.min_duration = min_duration
+        self.max_duration = max_duration
+        self.resampled_audio_dir = resampled_audio_dir
+        self.audio_format = audio_format
+        self.audio_filepath_key = audio_filepath_key
+        self.save_other_part = save_other_part
+        self.target_samplerate = target_samplerate
+        random.seed(random_seed)
+
+    def process_dataset_entry(self, data_entry):
+        data_entries = []
+
+        data, samplerate = soundfile.read(
+            data_entry[self.audio_filepath_key],
+        )
+        duration = data.shape[0] / samplerate
+        audio_format = self.audio_format if self.audio_format else data_entry[self.audio_filepath_key].suffix
+
+        Path(self.resampled_audio_dir).mkdir(parents=True, exist_ok=True)
+
+        segment_num = 0
+
+        while True:
+            rand_dur = random.uniform(self.min_duration, min(self.max_duration, duration))
+            segmented_part = data[: int(round(samplerate * rand_dur))]
+
+            new_filename = Path(self.resampled_audio_dir) / Path(data_entry[self.audio_filepath_key]).stem
+            new_filename = new_filename.as_posix() + f'_{segment_num}.{audio_format}'
+            soundfile.write(new_filename, segmented_part, self.target_samplerate)
+
+            new_data_entry = data_entry.copy()
+            new_data_entry[self.audio_filepath_key] = new_filename
+            new_data_entry['duration'] = round(rand_dur, 2)
+
+            data_entries.append(DataEntry(data=new_data_entry))
+            segment_num += 1
+
+            if (duration - rand_dur) > self.max_duration:
+                data = data[int(round(samplerate * rand_dur)) :]
+                duration = duration - rand_dur
+                continue
+
+            if self.save_other_part:
+                other_part = data[int(round(samplerate * rand_dur)) :]
+                new_filename = Path(self.resampled_audio_dir) / Path(data_entry[self.audio_filepath_key]).stem
+                new_filename = new_filename.as_posix() + f'_{segment_num}.{audio_format}'
+                soundfile.write(new_filename, other_part, self.target_samplerate)
+
+                new_data_entry = data_entry.copy()
+                new_data_entry[self.audio_filepath_key] = new_filename
+                new_data_entry['duration'] = round(duration - rand_dur, 2)
+                data_entries.append(DataEntry(data=new_data_entry))
+                break
+
+            if not self.save_other_part:
+                break
+
+        return data_entries
+
+
+class UntarAudios(BaseParallelProcessor):
+    def __init__(
+        self,
+        tar_dir: str,
+        resampled_audio_dir: str,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.tar_dir = Path(tar_dir)
+        self.resampled_audio_dir = resampled_audio_dir
+
+    def read_manifest(self):
+        """Reading the input manifest file.
+
+        .. note::
+            This function should be overridden in the "initial" class creating
+            manifest to read from the original source of data.
+        """
+        for file in self.tar_dir.glob('*.tar'):
+            yield file
+
+    def process(self):
+        for manifest_chunk in self._chunk_manifest():
+            # this will unroll all inner lists
+            data = itertools.chain(
+                *process_map(
+                    self.process_dataset_entry,
+                    manifest_chunk,
+                    max_workers=self.max_workers,
+                    chunksize=self.chunksize,
+                )
+            )
+
+    def process_dataset_entry(self, data_entry):
+        with open(data_entry, 'r') as tar:
+            tar.extractall(self.resampled_audio_dir)
+
+        os.remove(data_entry)
+
+        return [DataEntry(data=None)]
