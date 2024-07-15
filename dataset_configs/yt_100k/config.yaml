@@ -1,0 +1,20 @@
+processors_to_run: all
+manifest: ???
+resampled_audio_dir: ???
+out_manifest: ???
+char_rate: ???
+
+processors:
+  - _target_: sdp.processors.DropHighLowCharrate
+    input_manifest_file: ${manifest}
+    low_charrate_threshold: ${char_rate}
+    text_key: pred_text
+    high_charrate_threshold: 10000
+
+  - _target_: sdp.processors.RandomSegment
+    input_manifest_file: ${manifest}
+    min_duration: 0.1
+    max_duration: 40.1
+    resampled_audio_dir: ${resampled_audio_dir}
+    audio_format: flac
+    output_manifest_file: ${out_manifest}
