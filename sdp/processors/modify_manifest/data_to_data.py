@@ -650,8 +650,18 @@ class RandomSegment(BaseParallelProcessor):
 
         segment_num = 0
 
+        if duration - self.min_duration < self.min_duration:
+            new_filename = Path(self.resampled_audio_dir) / Path(data_entry[self.audio_filepath_key]).stem
+            new_filename = new_filename.as_posix() + f'_{segment_num}.{audio_format}'
+            soundfile.write(new_filename, segmented_part, self.target_samplerate)
+
+            new_data_entry = data_entry.copy()
+            new_data_entry[self.audio_filepath_key] = new_filename
+
+            return [DataEntry(data=new_data_entry)]
+
         while True:
-            rand_dur = random.uniform(self.min_duration, min(self.max_duration, duration))
+            rand_dur = random.uniform(self.min_duration, min(self.max_duration, duration) - self.min_duration)
             segmented_part = data[: int(round(samplerate * rand_dur))]
 
             new_filename = Path(self.resampled_audio_dir) / Path(data_entry[self.audio_filepath_key]).stem
