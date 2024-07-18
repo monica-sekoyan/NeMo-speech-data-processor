@@ -17,6 +17,8 @@ import re
 from operator import eq, ge, gt, le, lt, ne
 from typing import List, Union
 
+import soundfile
+
 from sdp.logging import logger
 from sdp.processors.base_processor import BaseParallelProcessor, DataEntry
 from sdp.utils.edit_spaces import add_start_end_spaces, remove_extra_spaces
@@ -794,4 +796,40 @@ class DropIfSubstringInInsertion(BaseParallelProcessor):
 
         for insertion, count in total_counter_sorted.items():
             logger.info(f"{insertion}, {count}")
+        super().finalize(metrics)
+
+
+class DropCorrupted(BaseParallelProcessor):
+    """Drops utterances if attribute is set to True/False.
+
+    Args:
+        key (str): which key to use for dropping utterances.
+        drop_if_false (bool): whether to drop if value is False. Defaults
+            to dropping if True.
+
+    Returns:
+         The same data as in the input manifest with some entries dropped.
+    """
+
+    def __init__(
+        self,
+        audio_filepath_key: str = 'audio_filepath',
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.audio_filepath_key = audio_filepath_key
+
+    def process_dataset_entry(self, data_entry) -> List:
+        try:
+            _, _ = soundfile.read(data_entry[self.audio_filepath_key])
+        except:
+            return [DataEntry(data=None, metrics=1)]
+
+        return [DataEntry(data=data_entry, metrics=0)]
+
+    def finalize(self, metrics):
+        total_counter = 0
+        for counter in metrics:
+            total_counter += counter
+        logger.info("Dropped %d utterances", total_counter)
         super().finalize(metrics)

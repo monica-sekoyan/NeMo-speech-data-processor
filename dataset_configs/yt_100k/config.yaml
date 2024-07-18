@@ -35,3 +35,8 @@ processors:
       - audio_filepath
       - duration
     output_manifest_file: ${out_manifest}
+
+  - _target_: sdp.processors.DropCorrupted
+    input_manifest_file: ${manifest}
+    output_manifest_file: ${out_manifest}
+
