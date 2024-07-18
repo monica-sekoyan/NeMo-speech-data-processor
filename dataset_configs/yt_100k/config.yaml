@@ -1,8 +1,13 @@
-processors_to_run: all
+processors_to_run: "2"
 manifest: ???
 resampled_audio_dir: ???
 out_manifest: ???
-char_rate: ???
+char_rate: 10
+chunksize: ???
+in_memory_chunksize: ???
+max_workers: ???
+start: ???
+end: ???
 
 processors:
   - _target_: sdp.processors.DropHighLowCharrate
@@ -10,10 +15,25 @@ processors:
     low_charrate_threshold: ${char_rate}
     text_key: pred_text
     high_charrate_threshold: 10000
+    #output_manifest_file: ${out_manifest}
+
+
+  - _target_: sdp.processors.KeepOnlySpecifiedFields
+    fields_to_keep:
+      - audio_filepath
+      - duration
+    output_manifest_file: ${out_manifest}
+
+
 
   - _target_: sdp.processors.RandomSegment
+    chunksize: ${chunksize}
+    in_memory_chunksize: ${in_memory_chunksize}
+    max_workers: ${max_workers}
+    start: ${start}
+    end: ${end}
     input_manifest_file: ${manifest}
-    min_duration: 0.1
+    min_duration: 1.5
     max_duration: 40.1
     resampled_audio_dir: ${resampled_audio_dir}
     audio_format: flac

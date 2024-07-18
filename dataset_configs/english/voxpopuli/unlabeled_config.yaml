@@ -10,4 +10,5 @@ processors:
     language_id: ${language_id}
     resampled_audio_dir: ${resampled_audio_dir}
     output_manifest_file: ${output_manifest_file}
+    delete_raw_file: True
 

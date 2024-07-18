@@ -116,6 +116,8 @@ class BaseParallelProcessor(BaseProcessor):
         chunksize: int = 100,
         in_memory_chunksize: int = 1000000,
         test_cases: Optional[List[Dict]] = None,
+        start: int = 0,
+        end: int = None,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -126,6 +128,8 @@ class BaseParallelProcessor(BaseProcessor):
         self.in_memory_chunksize = in_memory_chunksize
         self.number_of_entries = 0
         self.total_duration = 0
+        self.start = start
+        self.end = end
 
         self.test_cases = test_cases
         # need to convert to list to avoid errors in iteration over None
@@ -183,8 +187,16 @@ class BaseParallelProcessor(BaseProcessor):
         os.makedirs(os.path.dirname(self.output_manifest_file), exist_ok=True)
         metrics = []
 
-        with open(self.output_manifest_file, "wt", encoding="utf8") as fout:
-            for manifest_chunk in self._chunk_manifest():
+        for chunk_idx, manifest_chunk in enumerate(self._chunk_manifest()):
+
+            if chunk_idx < self.start:
+                continue
+
+            if self.end and chunk_idx > self.end:
+                break
+            
+            with open(self.output_manifest_file.replace(".json", f"_{chunk_idx}.json"), "wt", encoding="utf8") as fout:
+                print("CHUNK #: ", chunk_idx)
                 # this will unroll all inner lists
                 data = itertools.chain(
                     *process_map(

@@ -207,6 +207,7 @@ class CreateInitialManifestVoxpopuliUnlabelled(BaseParallelProcessor):
         code_dir: str = None,
         target_samplerate: int = 16000,
         target_nchannels: int = 1,
+        delete_raw_file: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -216,6 +217,7 @@ class CreateInitialManifestVoxpopuliUnlabelled(BaseParallelProcessor):
         self.code_dir = code_dir
         self.target_samplerate = target_samplerate
         self.target_nchannels = target_nchannels
+        self.delete_raw_file = delete_raw_file
 
     def prepare(self):
         """Downloading data (unless already done)"""
@@ -249,6 +251,7 @@ class CreateInitialManifestVoxpopuliUnlabelled(BaseParallelProcessor):
     def read_manifest(self):
         audios = Path(self.raw_data_dir, 'unlabelled_data', self.language_id.replace('_v2', '')).rglob('*.ogg')
 
+        print(audios)
         return audios
 
     def process_dataset_entry(self, data_entry: str):
@@ -273,6 +276,10 @@ class CreateInitialManifestVoxpopuliUnlabelled(BaseParallelProcessor):
                 "audio_filepath": tgt_flac_path,
                 "duration": audio.duration_seconds,
             }
+
+            if self.delete_raw_file:
+                os.remove(data_entry)
+
         except Exception as e:
             print(e)
             print(data_entry)
