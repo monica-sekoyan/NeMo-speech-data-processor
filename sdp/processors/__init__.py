@@ -14,6 +14,9 @@
 
 # let's import all supported processors here to simplify target specification
 
+from sdp.processors.datasets.babel.create_initial_manifest import (
+    CreateInitialManifestBabel,
+)
 from sdp.processors.datasets.coraa.create_initial_manifest import (
     CreateInitialManifestCORAA,
 )
@@ -70,6 +73,7 @@ from sdp.processors.modify_manifest.common import (
 from sdp.processors.modify_manifest.create_manifest import CreateInitialManifestByExt
 from sdp.processors.modify_manifest.data_to_data import (
     CountNumWords,
+    ExtractFromTar,
     FfmpegConvert,
     GetAudioDuration,
     InsIfASRInsertion,
@@ -81,7 +85,6 @@ from sdp.processors.modify_manifest.data_to_data import (
     SubMakeLowercase,
     SubRegex,
     UntarAudios,
-    ExtractFromTar
 )
 from sdp.processors.modify_manifest.data_to_dropbool import (
     DropASRError,

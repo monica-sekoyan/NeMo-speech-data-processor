@@ -27,7 +27,7 @@ from sdp.processors.base_processor import BaseParallelProcessor, DataEntry
 VOXPOPULI_URL = "https://github.com/facebookresearch/voxpopuli"
 
 
-class CreateInitialManifestVoxpopuli(BaseParallelProcessor):
+class CreateInitialManifestBabel(BaseParallelProcessor):
     """Processor to create initial manifest for the VoxPopuli dataset.
 
     Dataset link: https://github.com/facebookresearch/voxpopuli/

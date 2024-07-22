@@ -1,0 +1,14 @@
+processors_to_run: all
+workspace_dir: ???
+data_type: ???
+resampled_audio_dir: ???
+output_manifest_file: ???
+
+processors:
+  - _target_: sdp.processors.CreateInitialManifestBabel
+    raw_data_dir: ${workspace_dir}
+    data_type: ${data_type}
+    data_split: training
+    resampled_audio_dir: ${resampled_audio_dir}
+    output_manifest_file: ${output_manifest_file}
+
