@@ -1,4 +1,4 @@
-processors_to_run: "1"
+processors_to_run: "2"
 manifest: ???
 resampled_audio_dir: ???
 out_manifest: ???
@@ -28,9 +28,11 @@ processors:
     low_charrate_threshold: ${char_rate}
     text_key: pred_text
     high_charrate_threshold: 10000
-    #output_manifest_file: ${out_manifest}
+    in_memory_chunksize: ${in_memory_chunksize}
+    output_manifest_file: ${out_manifest}
 
   - _target_: sdp.processors.KeepOnlySpecifiedFields
+    input_manifest_file: ${manifest}
     fields_to_keep:
       - audio_filepath
       - duration

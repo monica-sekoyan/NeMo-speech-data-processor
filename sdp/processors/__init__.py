@@ -81,6 +81,7 @@ from sdp.processors.modify_manifest.data_to_data import (
     SubMakeLowercase,
     SubRegex,
     UntarAudios,
+    ExtractFromTar
 )
 from sdp.processors.modify_manifest.data_to_dropbool import (
     DropASRError,
