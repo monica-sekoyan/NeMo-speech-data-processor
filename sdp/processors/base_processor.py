@@ -16,6 +16,7 @@ import itertools
 import json
 import multiprocessing
 import os
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
@@ -112,8 +113,6 @@ class BaseParallelProcessor(BaseProcessor):
         chunksize: int = 100,
         in_memory_chunksize: int = 1000000,
         test_cases: Optional[List[Dict]] = None,
-        start: int = 0,
-        end: int = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -124,8 +123,7 @@ class BaseParallelProcessor(BaseProcessor):
         self.in_memory_chunksize = in_memory_chunksize
         self.number_of_entries = 0
         self.total_duration = 0
-        self.start = start
-        self.end = end
+        self.start_time = time.time()
 
         self.test_cases = test_cases
         # need to convert to list to avoid errors in iteration over None
@@ -292,6 +290,11 @@ class BaseParallelProcessor(BaseProcessor):
         logger.info("Total number of entries after processing: %d", self.number_of_entries)
         if self.total_duration != 0:
             logger.info("Total audio duration (hours) after processing: %.2f", self.total_duration / 3600)
+        else:
+            logger.info(
+                "Unable to calculate total audio duration (hours) after processing. Please ensure that the manifest file includes a 'duration' key."
+            )
+        logger.info("Processor completed in (seconds): %.2f", time.time() - self.start_time)
 
     def test(self):
         """Applies processing to "test_cases" and raises an error in case of mismatch."""

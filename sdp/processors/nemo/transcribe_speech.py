@@ -133,9 +133,9 @@ class TranscriptionConfig:
     pretrained_name: Optional[str] = None  # Name of a pretrained model
     audio_dir: Optional[str] = None  # Path to a directory which contains audio files
     dataset_manifest: Optional[str] = None  # Path to dataset's JSON manifest
-    channel_selector: Optional[
-        Union[int, str]
-    ] = None  # Used to select a single channel from multichannel audio, or use average across channels
+    channel_selector: Optional[Union[int, str]] = (
+        None  # Used to select a single channel from multichannel audio, or use average across channels
+    )
     audio_key: str = 'audio_filepath'  # Used to override the default audio key in dataset_manifest
     eval_config_yaml: Optional[str] = None  # Path to a yaml file of config of evaluation
     presort_manifest: bool = True  # Significant inference speedup on short-form data due to padding reduction

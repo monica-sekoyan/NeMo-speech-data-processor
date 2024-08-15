@@ -58,9 +58,10 @@ from sdp.processors.datasets.voxpopuli.create_initial_manifest import (
 from sdp.processors.datasets.voxpopuli.normalize_from_non_pc_text import (
     NormalizeFromNonPCTextVoxpopuli,
 )
-from sdp.processors.huggingface.speech_recognition import ASRTransformers, ASRWhisper
+from sdp.processors.huggingface.speech_recognition import ASRTransformers
 from sdp.processors.modify_manifest.common import (
     AddConstantFields,
+    ApplyInnerJoin,
     ChangeToRelativePath,
     CombineSources,
     DuplicateFields,
@@ -77,6 +78,8 @@ from sdp.processors.modify_manifest.data_to_data import (
     GetAudioDuration,
     InsIfASRInsertion,
     RandomSegment,
+    InverseNormalizeText,
+    NormalizeText,
     ReadTxtLines,
     SoxConvert,
     SplitLineBySentence,
