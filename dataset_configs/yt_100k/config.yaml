@@ -10,6 +10,17 @@ start: ???
 end: ???
 
 processors:
+  - _target_: sdp.processors.GetAudioDuration
+    audio_filepath_key: audio_filepath
+    duration_key: duration
+    chunksize: ${chunksize}
+    in_memory_chunksize: ${in_memory_chunksize}
+    max_workers: ${max_workers}
+    start: ${start}
+    end: ${end}
+    input_manifest_file: ${manifest}
+    output_manifest_file: ${out_manifest}
+
   - _target_: sdp.processors.RandomSegment
     chunksize: ${chunksize}
     in_memory_chunksize: ${in_memory_chunksize}

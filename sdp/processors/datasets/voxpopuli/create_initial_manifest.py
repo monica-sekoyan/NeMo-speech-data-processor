@@ -12,14 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import os
 import subprocess
 from pathlib import Path
+import tarfile
+from typing import List
 
 import soundfile as sf
 import sox
 from pydub import AudioSegment
 from sox import Transformer
+from tqdm import tqdm
 
 from sdp.logging import logger
 from sdp.processors.base_processor import BaseParallelProcessor, DataEntry
@@ -27,7 +31,7 @@ from sdp.processors.base_processor import BaseParallelProcessor, DataEntry
 VOXPOPULI_URL = "https://github.com/facebookresearch/voxpopuli"
 
 
-class CreateInitialManifestBabel(BaseParallelProcessor):
+class CreateInitialManifestVoxpopuli(BaseParallelProcessor):
     """Processor to create initial manifest for the VoxPopuli dataset.
 
     Dataset link: https://github.com/facebookresearch/voxpopuli/
@@ -218,8 +222,10 @@ class CreateInitialManifestVoxpopuliUnlabelled(BaseParallelProcessor):
         self.target_samplerate = target_samplerate
         self.target_nchannels = target_nchannels
         self.delete_raw_file = delete_raw_file
+        self.tar_file = None
 
     def prepare(self):
+        return
         """Downloading data (unless already done)"""
         os.makedirs(self.raw_data_dir, exist_ok=True)
 
@@ -249,10 +255,8 @@ class CreateInitialManifestVoxpopuliUnlabelled(BaseParallelProcessor):
             )
 
     def read_manifest(self):
-        audios = Path(self.raw_data_dir, 'unlabelled_data', self.language_id.replace('_v2', '')).rglob('*.ogg')
+        return Path(self.raw_data_dir,  self.language_id.replace('_v2', '')).rglob('*.ogg')
 
-        print(audios)
-        return audios
 
     def process_dataset_entry(self, data_entry: str):
         tgt_flac_path = os.path.join(self.resampled_audio_dir, data_entry.stem + ".flac")
@@ -269,8 +273,7 @@ class CreateInitialManifestVoxpopuliUnlabelled(BaseParallelProcessor):
             if not os.path.exists(self.resampled_audio_dir):
                 os.makedirs(self.resampled_audio_dir, exist_ok=True)
 
-            if not os.path.exists(tgt_flac_path):
-                audio.export(tgt_flac_path, format="flac", codec="libvorbis")
+            audio.export(tgt_flac_path, format="flac")
 
             data = {
                 "audio_filepath": tgt_flac_path,
@@ -286,3 +289,111 @@ class CreateInitialManifestVoxpopuliUnlabelled(BaseParallelProcessor):
             data = None
 
         return [DataEntry(data=data)]
+
+
+
+
+
+
+
+
+
+class CorrectManifest(BaseParallelProcessor):
+    """Processor to create initial manifest for the VoxPopuli dataset.
+
+    Dataset link: https://github.com/facebookresearch/voxpopuli/
+
+    Downloads and unzips raw VoxPopuli data for the specified language,
+    and creates an initial manifest using the transcripts provided in the
+    raw data.
+
+    .. note::
+        This processor will install a couple of Python packages, including
+        PyTorch, so it might be a good idea to run it in an isolated Python
+        environment.
+
+    Args:
+        raw_data_dir (str): the directory where the downloaded data will be/is saved.
+        language_id (str): the language of the data you wish to be downloaded.
+            E.g., "en", "es", "it", etc.
+        data_split (str): "train", "dev" or "test".
+        resampled_audio_dir (str): the directory where the resampled wav
+            files will be stored.
+        target_samplerate (int): sample rate (Hz) to use for resampling.
+            Defaults to 16000.
+        target_nchannels (int): number of channels to create during resampling process.
+            Defaults to 1.
+
+    Returns:
+        This processor generates an initial manifest file with the following fields::
+
+            {
+                "audio_filepath": <path to the audio file>,
+                "duration": <duration of the audio in seconds>,
+                "text": <transcription (with provided normalization)>,
+                "raw_text": <original transcription (without normalization)>,
+                "speaker_id": <speaker id>,
+                "gender": <speaker gender>,
+                "age": <speaker age>,
+                "is_gold_transcript": <whether the transcript has been verified>,
+                "accent": <speaker accent, if known>,
+            }
+    """
+
+    def __init__(
+        self,
+        raw_data_dir: str,
+        language_id: str,
+        resampled_audio_dir: str,
+        code_dir: str = None,
+        target_samplerate: int = 16000,
+        target_nchannels: int = 1,
+        delete_raw_file: bool = False,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.raw_data_dir = Path(raw_data_dir)
+        self.language_id = language_id
+        self.resampled_audio_dir = resampled_audio_dir
+        self.code_dir = code_dir
+        self.target_samplerate = target_samplerate
+        self.target_nchannels = target_nchannels
+        self.delete_raw_file = delete_raw_file
+        self.years = []
+
+    def prepare(self):
+        """Downloading data (unless already done)"""
+        self.processed_audios = []
+        with open(Path(self.raw_data_dir, 'manifest.json'), 'r') as f:
+            for line in f:
+                self.processed_audios.append(json.loads(line)['audio_filepath'])
+
+    def read_manifest(self):
+        audios = Path(self.raw_data_dir, 'audios').rglob('*.flac')
+        return audios
+
+    def process_dataset_entry(self, data_entry: str):
+
+        if data_entry.stem not in self.processed_audios:
+            self.years.append(data_entry.stem[:4])
+
+            return  [DataEntry(data=None)]
+    
+            try:
+                audio = AudioSegment.from_file(data_entry)
+                data = {
+                "audio_filepath": data_entry.as_posix(),
+                "duration": audio.duration_seconds,
+                }
+                return [DataEntry(data=data)]
+            
+            except Exception as e:
+                print(data_entry)
+                raise e
+            
+        else:
+            return [DataEntry(data=None)]
+        
+
+    def finalize(self):
+        print(set(self.years))

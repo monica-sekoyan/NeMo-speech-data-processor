@@ -20,7 +20,7 @@ import random
 import re
 from pathlib import Path
 from typing import Dict, List
-
+from pydub import AudioSegment
 import tarfile
 import psutil
 import soundfile
@@ -647,10 +647,13 @@ class RandomSegment(BaseParallelProcessor):
 
         data_entries = []
 
-        data, samplerate = soundfile.read(
-            data_entry[self.audio_filepath_key],
-        )
-        duration = data.shape[0] / samplerate
+        audio = AudioSegment.from_file(data_entry[self.audio_filepath_key])
+        duration = audio.duration_seconds
+
+        if audio.frame_rate != self.target_samplerate:
+            audio = audio.set_frame_rate(self.target_samplerate)
+
+
         audio_format = self.audio_format if self.audio_format else data_entry[self.audio_filepath_key].suffix
 
         Path(self.resampled_audio_dir).mkdir(parents=True, exist_ok=True)
@@ -661,8 +664,7 @@ class RandomSegment(BaseParallelProcessor):
             new_filename = Path(self.resampled_audio_dir) / Path(data_entry[self.audio_filepath_key]).stem
             new_filename = new_filename.as_posix() + f'_{segment_num}.{audio_format}'
 
-            if not os.path.exists(new_filename):
-                soundfile.write(new_filename, data, self.target_samplerate)
+            audio.export(new_filename, format=self.audio_format)
 
             new_data_entry = data_entry.copy()
             new_data_entry[self.audio_filepath_key] = new_filename
@@ -671,12 +673,12 @@ class RandomSegment(BaseParallelProcessor):
 
         while True:
             rand_dur = random.uniform(self.min_duration, min(self.max_duration, duration) - self.min_duration)
-            segmented_part = data[: int(round(samplerate * rand_dur))]
+            segmented_part = audio[: int(rand_dur * 1000)]
 
             new_filename = Path(self.resampled_audio_dir) / Path(data_entry[self.audio_filepath_key]).stem
             new_filename = new_filename.as_posix() + f'_{segment_num}.{audio_format}'
-            if not os.path.exists(new_filename):
-                soundfile.write(new_filename, segmented_part, self.target_samplerate)
+            
+            segmented_part.export(new_filename, format=self.audio_format)
 
             new_data_entry = data_entry.copy()
             new_data_entry[self.audio_filepath_key] = new_filename
@@ -686,17 +688,16 @@ class RandomSegment(BaseParallelProcessor):
             segment_num += 1
 
             if (duration - rand_dur) > self.max_duration:
-                data = data[int(round(samplerate * rand_dur)) :]
+                audio = audio[int(rand_dur * 1000) :]
                 duration = duration - rand_dur
                 continue
 
             if self.save_other_part:
-                other_part = data[int(round(samplerate * rand_dur)) :]
+                other_part = audio[int(rand_dur * 1000) :]
                 new_filename = Path(self.resampled_audio_dir) / Path(data_entry[self.audio_filepath_key]).stem
                 new_filename = new_filename.as_posix() + f'_{segment_num}.{audio_format}'
                 
-                if not os.path.exists(new_filename):
-                    soundfile.write(new_filename, other_part, self.target_samplerate)
+                other_part.export(new_filename, format=self.audio_format)
 
                 new_data_entry = data_entry.copy()
                 new_data_entry[self.audio_filepath_key] = new_filename
@@ -708,7 +709,6 @@ class RandomSegment(BaseParallelProcessor):
                 break
 
         return data_entries
-
 
 class UntarAudios(BaseParallelProcessor):
     def __init__(
@@ -744,12 +744,10 @@ class UntarAudios(BaseParallelProcessor):
             )
 
     def process_dataset_entry(self, data_entry):
-        with open(data_entry, 'r') as tar:
+        with tarfile.open(data_entry, 'r') as tar:
             tar.extractall(self.resampled_audio_dir)
 
         os.remove(data_entry)
-
-
 
 class ExtractFromTar(BaseParallelProcessor):
     def __init__(
@@ -761,7 +759,6 @@ class ExtractFromTar(BaseParallelProcessor):
         super().__init__(**kwargs)
         self.tar_dir = Path(tar_dir)
         self.extract_to_dir = extract_to_dir
-
 
     def read_manifest(self):
         """Reading the input manifest file.

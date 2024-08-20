@@ -1,16 +1,8 @@
 processors_to_run: all
-data_split: ???
-resampled_audio_dir: ???
-manifest: ???
+input: ???
+output: ???
 
 processors:
-  - _target_: sdp.processors.CustomDataSplitSUNO
-    resampled_audio_dir: ${resampled_audio_dir}
-    data_split: ${data_split}
-    input_manifest_file: ${manifest}
-    dev_ratio: 0.02
-    test_ratio: 0.02
-
-  - _target_: sdp.processors.ChangeToRelativePath
-    base_dir: ${resampled_audio_dir}
-    output_manifest_file: ${resampled_audio_dir}/${data_split}_manifest.json
+  - _target_: sdp.processors.CalculateUDWER
+    input_manifest_file: ${input}
+    output_manifest_file: ${output}

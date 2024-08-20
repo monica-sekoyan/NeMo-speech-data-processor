@@ -2,13 +2,16 @@ processors_to_run: all
 workspace_dir: ???
 data_type: ???
 resampled_audio_dir: ???
+data_split: ???
 output_manifest_file: ???
 
 processors:
   - _target_: sdp.processors.CreateInitialManifestBabel
     raw_data_dir: ${workspace_dir}
     data_type: ${data_type}
-    data_split: training
+    data_split: ${data_split}
+    max_workers: 16
+    chunksize: 10
     resampled_audio_dir: ${resampled_audio_dir}
     output_manifest_file: ${output_manifest_file}
 

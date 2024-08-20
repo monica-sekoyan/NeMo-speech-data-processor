@@ -3,6 +3,10 @@ workspace_dir: ???
 language_id: ???
 resampled_audio_dir: ???
 output_manifest_file: ???
+chunksize: ???
+in_memory_chunksize: ???
+start: ???
+end: ???
 
 processors:
   - _target_: sdp.processors.CreateInitialManifestVoxpopuliUnlabelled
@@ -10,5 +14,10 @@ processors:
     language_id: ${language_id}
     resampled_audio_dir: ${resampled_audio_dir}
     output_manifest_file: ${output_manifest_file}
-    delete_raw_file: True
+    chunksize: ${chunksize}
+    in_memory_chunksize: ${in_memory_chunksize}
+    start: ${start}
+    end: ${end}
+    max_workers: -1
+    delete_raw_file: False
 

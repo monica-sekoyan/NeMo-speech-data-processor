@@ -14,6 +14,7 @@
 
 import os
 import subprocess
+import pathlib
 from pathlib import Path
 
 import soundfile as sf
@@ -25,7 +26,7 @@ from sdp.logging import logger
 from sdp.processors.base_processor import BaseParallelProcessor, DataEntry
 
 
-class x(BaseParallelProcessor):
+class CreateInitialManifestBabel(BaseParallelProcessor):
     """Processor to create initial manifest for the VoxPopuli dataset.
 
     Dataset link: https://github.com/facebookresearch/voxpopuli/
@@ -87,36 +88,54 @@ class x(BaseParallelProcessor):
 
         self.audios_dir = Path(self.raw_data_dir, self.data_type, self.data_split, 'audio')
         self.transcriptions_dir = Path(self.raw_data_dir, self.data_type, self.data_split, 'transcription')
-        self.demographics_file = Path(self.raw_data_dir, self.data_type, 'reference_matetials', 'demographics.tsv')
+        self.demographics_file = Path(self.raw_data_dir, self.data_type, 'reference_materials', 'demographics.tsv')
+        self.un_demographics_file = Path(self.raw_data_dir, self.data_type, 'reference_materials', 'demographics.untranscribed-training.tsv')
 
         if not os.path.exists(self.resampled_audio_dir):
             os.makedirs(self.resampled_audio_dir, exist_ok=True)
 
-    def read_manifest(self):
-        """Reading the input manifest file.
-
-        .. note::
-            This function should be overridden in the "initial" class creating
-            manifest to read from the original source of data.
-        """
+    def prepare(self):
+        
+        self.demographics = {}
 
         with open(self.demographics_file, "rt", encoding="utf8") as fin:
             header = fin.readline()
             titles = [t.strip() for t in header.split('\t')]
             for line in fin:
-                data_entry = dict(zip(titles, line.split('\t')))
-                yield data_entry
+                data_entry = dict(zip(titles, line.strip('\n').split('\t')))
+                self.demographics[data_entry["outputFn"]] = data_entry
+        
+        if self.un_demographics_file.exists():
+            with open(self.un_demographics_file, "rt", encoding="utf8") as fin:
+                header = fin.readline()
+                titles = [t.strip() for t in header.split('\t')]
+                for line in fin:
+                    data_entry = dict(zip(titles, line.strip('\n').split('\t')))
+                    self.demographics[data_entry["outputFn"]] = data_entry
 
-    def process_dataset_entry(self, data_entry: dict):
-        audio_filepath = Path(self.audios_dir, data_entry[self.outputFn])
-        transcription_path = Path(self.transcriptions_dir, data_entry[self.outputFn].stem).with_suffix('.txt')
+
+    def read_manifest(self):
+        return self.audios_dir.glob("*.sph")
+
+    def process_dataset_entry(self, data_entry: pathlib.PosixPath):
+        transcription_path = Path(self.transcriptions_dir, data_entry.stem).with_suffix('.txt')
 
         tgt_audio_filepath = (
-            Path(self.resampled_audio_dir, data_entry[self.outputFn].stem).with_suffix('.flac').as_posix()
+            Path(self.resampled_audio_dir, data_entry.stem).with_suffix('.flac').as_posix()
         )
 
         try:
-            audio = AudioSegment.from_file(audio_filepath)
+            audio = AudioSegment.from_file(data_entry)
+
+            if not transcription_path.exists():
+                if audio.frame_rate != self.target_samplerate:
+                    audio = audio.set_frame_rate(self.target_samplerate)
+                audio.export(tgt_audio_filepath, format="flac")
+
+                modified_entry = self.demographics[data_entry.name].copy()
+                modified_entry['audio_filepath'] = tgt_audio_filepath
+                modified_entry['duration'] = round(audio.duration_seconds, 2)
+                return [DataEntry(data=modified_entry)]
 
             if audio.frame_rate != self.target_samplerate:
                 audio = audio.set_frame_rate(self.target_samplerate)
@@ -125,28 +144,29 @@ class x(BaseParallelProcessor):
                 return NotImplementedError
 
             with open(transcription_path, 'rt') as f:
-                timestamps = f[::2]
-                texts = f[1::2]
+                data = f.readlines()
+                timestamps = data[::2]
+                texts = data[1::2]
 
             data_entries = []
 
             for idx in range(len(timestamps) - 1):
+                text = texts[idx].strip('\n')
+                if text == "<no-speech>":
+                    continue
                 new_audio_filepath = tgt_audio_filepath.replace('.flac', f'_{idx}.flac')
 
-                start = float(timestamps[idx])
-                end = float(timestamps[idx + 1])
+                start = float(timestamps[idx].strip('[]\n'))
+                end = float(timestamps[idx + 1].strip('[]\n'))
 
-                audio_segment = audio.get_array_of_samples()[
-                    start * self.target_samplerate : end * self.target_samplerate
-                ]
+                audio_segment = audio[start * 1000 : end * 1000]
 
-                if not os.path.exists(new_audio_filepath):
-                    audio_segment.export(tgt_audio_filepath, format="flac")
+                audio_segment.export(new_audio_filepath, format="flac")
 
-                modified_entry = data_entry.copy()
+                modified_entry = self.demographics[data_entry.name].copy()
                 modified_entry['audio_filepath'] = new_audio_filepath
-                modified_entry['text'] = texts[idx]
-                modified_entry['duration'] = end - start
+                modified_entry['text'] = text
+                modified_entry['duration'] = round(end - start, 2)
 
                 data_entries.append(DataEntry(data=modified_entry))
 

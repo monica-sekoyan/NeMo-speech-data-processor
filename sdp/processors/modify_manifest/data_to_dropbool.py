@@ -821,8 +821,12 @@ class DropCorrupted(BaseParallelProcessor):
 
     def process_dataset_entry(self, data_entry) -> List:
         try:
-            _, _ = soundfile.read(data_entry[self.audio_filepath_key])
+            data, _ = soundfile.read(data_entry[self.audio_filepath_key])
         except:
+            return [DataEntry(data=None, metrics=1)]
+
+        if sum(data) == 0:
+            print(data_entry[self.audio_filepath_key])
             return [DataEntry(data=None, metrics=1)]
 
         return [DataEntry(data=data_entry, metrics=0)]
@@ -832,4 +836,5 @@ class DropCorrupted(BaseParallelProcessor):
         for counter in metrics:
             total_counter += counter
         logger.info("Dropped %d utterances", total_counter)
+        print("Dropped %d utterances", total_counter)
         super().finalize(metrics)
