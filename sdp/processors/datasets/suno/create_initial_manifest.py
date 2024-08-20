@@ -20,16 +20,16 @@ import itertools
 import json
 import os
 import random
-import jiwer
 import shutil
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
+from itertools import repeat
 from pathlib import Path
 from typing import Dict, Tuple
-from concurrent.futures import ThreadPoolExecutor
 
+import jiwer
 from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
-from itertools import repeat
 
 from sdp.logging import logger
 from sdp.processors.base_processor import (
@@ -245,9 +245,7 @@ class CustomDataSplitSUNO(BaseParallelProcessor):
         return [DataEntry(data=data_entry)]
 
 
-
 class CalculateUDWERParallel(BaseParallelProcessor):
-
     def __init__(
         self,
         **kwargs,
@@ -259,10 +257,9 @@ class CalculateUDWERParallel(BaseParallelProcessor):
         comb_error = 0
 
         for r_, h_ in zip(reference, permutation):
-
             measures = jiwer.compute_measures(r_, h_)
             errors = measures['insertions'] + measures['deletions'] + measures['substitutions']
-            comb_error += errors  
+            comb_error += errors
 
         return comb_error
 
@@ -271,11 +268,11 @@ class CalculateUDWERParallel(BaseParallelProcessor):
         h_utt_s = h.split(' <cs> ')
 
         if len(r_utt_s) < len(h_utt_s):
-            padding = ['_']*(len(h_utt_s) - len(r_utt_s))
+            padding = ['_'] * (len(h_utt_s) - len(r_utt_s))
             r_utt_s.extend(padding)
 
         if len(h_utt_s) < len(r_utt_s):
-            padding = ['_']*(len(r_utt_s) - len(h_utt_s))
+            padding = ['_'] * (len(r_utt_s) - len(h_utt_s))
             h_utt_s.extend(padding)
 
         assert len(r_utt_s) == len(h_utt_s)
@@ -284,7 +281,6 @@ class CalculateUDWERParallel(BaseParallelProcessor):
         num_words = 0
 
         for r_, h_ in zip(r_utt_s, h_utt_s):
-
             measures = jiwer.compute_measures(r_, h_)
             errors = measures['insertions'] + measures['deletions'] + measures['substitutions']
 
@@ -295,10 +291,12 @@ class CalculateUDWERParallel(BaseParallelProcessor):
             wer = initial_error / num_words
             return wer, initial_error, num_words
 
-        permutations = list(itertools.permutations(h_utt_s))[1:]
+        permutations = list(itertools.permutations(h_utt_s))[1:100]
 
         if len(permutations) > 1_000_000:
             return None, None, None
+
+        print('GAGOOOOoooooooooo')
 
         print("LEN PERMUTATIONS: ", len(permutations))
 
@@ -312,7 +310,6 @@ class CalculateUDWERParallel(BaseParallelProcessor):
         #         print(e)
         #         print(r_utt_s)
         #         raise e
-
 
         with ThreadPoolExecutor(max_workers=8) as executor:
             results = list(executor.map(self.calculate_for_perm, permutations, repeat(r_utt_s)))
@@ -358,7 +355,6 @@ class CalculateUDWERParallel(BaseParallelProcessor):
         #         comb_error += errors
         #         comb_words += len(r_.split())
 
-            
         #     wer = comb_error / comb_words
 
         #     if comb_error < min_error:
@@ -375,7 +371,6 @@ class CalculateUDWERParallel(BaseParallelProcessor):
 
     @staticmethod
     def get_wer_without_cs(r, h):
-
         r = r.replace(' <cs>', '')
         h = h.replace(' <cs>', '')
         measures = jiwer.compute_measures(r, h)
@@ -384,7 +379,6 @@ class CalculateUDWERParallel(BaseParallelProcessor):
         wer = errors / len(r.split())
 
         return wer, errors, len(r.split())
-
 
     def process_dataset_entry(self, data_entry: str):
         r = data_entry['text']
@@ -408,12 +402,7 @@ class CalculateUDWERParallel(BaseParallelProcessor):
         return [DataEntry(data=data_entry)]
 
 
-
-
-
-
 class CalculateUDWER(BaseProcessor):
-
     def __init__(
         self,
         **kwargs,
@@ -425,16 +414,14 @@ class CalculateUDWER(BaseProcessor):
         comb_error = 0
 
         for r_, h_ in zip(reference, permutation):
-
             measures = jiwer.compute_measures(r_, h_)
             errors = measures['insertions'] + measures['deletions'] + measures['substitutions']
-            comb_error += errors  
+            comb_error += errors
 
         return [comb_error]
 
     @staticmethod
     def get_wer_without_cs(r, h):
-
         r = r.replace(' <cs>', '')
         h = h.replace(' <cs>', '')
         measures = jiwer.compute_measures(r, h)
@@ -444,18 +431,17 @@ class CalculateUDWER(BaseProcessor):
 
         return wer, errors, len(r.split())
 
-
     @staticmethod
     def get_ud_wer(r, h, ref_errors=None):
         r_utt_s = r.split(' <cs> ')
         h_utt_s = h.split(' <cs> ')
 
         if len(r_utt_s) < len(h_utt_s):
-            padding = ['_']*(len(h_utt_s) - len(r_utt_s))
+            padding = ['_'] * (len(h_utt_s) - len(r_utt_s))
             r_utt_s.extend(padding)
 
         if len(h_utt_s) < len(r_utt_s):
-            padding = ['_']*(len(r_utt_s) - len(h_utt_s))
+            padding = ['_'] * (len(r_utt_s) - len(h_utt_s))
             h_utt_s.extend(padding)
 
         assert len(r_utt_s) == len(h_utt_s)
@@ -464,7 +450,6 @@ class CalculateUDWER(BaseProcessor):
         num_words = 0
 
         for r_, h_ in zip(r_utt_s, h_utt_s):
-
             measures = jiwer.compute_measures(r_, h_)
             errors = measures['insertions'] + measures['deletions'] + measures['substitutions']
 
@@ -475,37 +460,36 @@ class CalculateUDWER(BaseProcessor):
             wer = initial_error / num_words
             return wer, initial_error, num_words
 
-        permutations = list(itertools.permutations(h_utt_s))[1:]
-
-        if len(permutations) > 1_000_000:
+        if len(h_utt_s) > 10:
             return None, None, None
 
-        print("LEN PERMUTATIONS: ", len(permutations))
+        permutations = itertools.permutations(h_utt_s)
 
-        # k_errors = []
+        if len(h_utt_s) < 5:
+            k_errors = []
 
-        # for perm in permutations:
-        #     try:
-        #         k_error = self.calculate_for_perm(perm, r_utt_s)
-        #         k_errors.append(k_error)
-        #     except Exception as e:
-        #         print(e)
-        #         print(r_utt_s)
-        #         raise e
+            for perm in permutations:
+                try:
+                    k_error = CalculateUDWER.calculate_for_perm(perm, r_utt_s)
+                    k_errors.extend(k_error)
+                except Exception as e:
+                    print(e)
+                    print(r_utt_s)
+                    raise e
 
+        else:
+            # with ThreadPoolExecutor(max_workers=8) as executor:
+            #     results = list(executor.map(self.calculate_for_perm, permutations, repeat(r_utt_s)))
 
-        # with ThreadPoolExecutor(max_workers=8) as executor:
-        #     results = list(executor.map(self.calculate_for_perm, permutations, repeat(r_utt_s)))
-
-        k_errors = itertools.chain(
-                    *process_map(
-                        CalculateUDWER.calculate_for_perm,
-                        permutations,
-                        repeat(r_utt_s),
-                        max_workers=2,
-                        chunksize=10,
-                    )
+            k_errors = itertools.chain(
+                *process_map(
+                    CalculateUDWER.calculate_for_perm,
+                    permutations,
+                    repeat(r_utt_s),
+                    max_workers=16,
+                    chunksize=10,
                 )
+            )
 
         min_error = min(k_errors)
         # print('MIN ERROR: ', min_error)
@@ -513,33 +497,33 @@ class CalculateUDWER(BaseProcessor):
         wer = min_error / num_words
 
         return wer, min_error, num_words
-    
-
 
     def process(self):
         with open(self.input_manifest_file, "rt", encoding="utf8") as fin:
-            with open(self.output_manifest_file, 'wt', encoding='utf8') as fout:
+            # with open(self.output_manifest_file, 'wt', encoding='utf8') as fout:
+            data_entries = []
+            for line in tqdm(fin):
+                data_entry = json.loads(line)
 
-                for line in tqdm(fin):
-                    data_entry = json.loads(line)
+                r = data_entry['text']
+                h = data_entry['pred_text']
 
-                    r = data_entry['text']
-                    h = data_entry['pred_text']
+                wer, error, word = self.get_wer_without_cs(r, h)
+                ud_wer, ud_error, ud_word = self.get_ud_wer(r, h, ref_errors=error)
 
-                    wer, error, word = self.get_wer_without_cs(r, h)
-                    ud_wer, ud_error, ud_word = self.get_ud_wer(r, h, ref_errors=error)
+                data_entry['wer'] = wer
+                # data_entry['ud_wer'] = ud_wer
 
-                    data_entry['wer'] = wer
-                    data_entry['ud_wer'] = ud_wer
+                # data_entry['ud_error'] = ud_error
+                # data_entry['ud_word'] = ud_word
 
-                    data_entry['ud_error'] = ud_error
-                    data_entry['ud_word'] = ud_word
+                data_entry['error'] = error
+                data_entry['word'] = word
 
-                    data_entry['error'] = error
-                    data_entry['word'] = word
+                data_entries.append(data_entry)
 
-                    json.dump(data_entry, fout, ensure_ascii=False)
-                    fout.write('\n')
-                    fout.flush()
-
-                    
+        with open(self.output_manifest_file, 'wt', encoding='utf8') as fout:
+            for data_entry in data_entries:
+                json.dump(data_entry, fout, ensure_ascii=False)
+                fout.write('\n')
+                # fout.flush()
