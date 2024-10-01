@@ -12,22 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import collections
 import itertools
+import json
 import os
 import random
 import re
+import tarfile
 from pathlib import Path
 from typing import Dict, List
-from pydub import AudioSegment
-import tarfile
+
 import psutil
 import soundfile
+from pydub import AudioSegment
 from sox import Transformer
-from tqdm.contrib.concurrent import process_map
 from tqdm import tqdm
-
+from tqdm.contrib.concurrent import process_map
 
 from sdp.logging import logger
 from sdp.processors.base_processor import BaseParallelProcessor, DataEntry
@@ -643,8 +643,6 @@ class RandomSegment(BaseParallelProcessor):
         random.seed(random_seed)
 
     def process_dataset_entry(self, data_entry):
-
-
         data_entries = []
 
         audio = AudioSegment.from_file(data_entry[self.audio_filepath_key])
@@ -652,7 +650,6 @@ class RandomSegment(BaseParallelProcessor):
 
         if audio.frame_rate != self.target_samplerate:
             audio = audio.set_frame_rate(self.target_samplerate)
-
 
         audio_format = self.audio_format if self.audio_format else data_entry[self.audio_filepath_key].suffix
 
@@ -677,7 +674,7 @@ class RandomSegment(BaseParallelProcessor):
 
             new_filename = Path(self.resampled_audio_dir) / Path(data_entry[self.audio_filepath_key]).stem
             new_filename = new_filename.as_posix() + f'_{segment_num}.{audio_format}'
-            
+
             segmented_part.export(new_filename, format=self.audio_format)
 
             new_data_entry = data_entry.copy()
@@ -696,7 +693,7 @@ class RandomSegment(BaseParallelProcessor):
                 other_part = audio[int(rand_dur * 1000) :]
                 new_filename = Path(self.resampled_audio_dir) / Path(data_entry[self.audio_filepath_key]).stem
                 new_filename = new_filename.as_posix() + f'_{segment_num}.{audio_format}'
-                
+
                 other_part.export(new_filename, format=self.audio_format)
 
                 new_data_entry = data_entry.copy()
@@ -709,6 +706,7 @@ class RandomSegment(BaseParallelProcessor):
                 break
 
         return data_entries
+
 
 class UntarAudios(BaseParallelProcessor):
     def __init__(
@@ -749,6 +747,7 @@ class UntarAudios(BaseParallelProcessor):
 
         os.remove(data_entry)
 
+
 class ExtractFromTar(BaseParallelProcessor):
     def __init__(
         self,
@@ -781,10 +780,8 @@ class ExtractFromTar(BaseParallelProcessor):
 
         for shard_id, entries in tar_entries.items():
             yield (shard_id, entries)
-            
 
     def process_dataset_entry(self, data_entry):
-
         shard_id, entries = data_entry
 
         print('Working on shard_id ', shard_id)
@@ -794,10 +791,9 @@ class ExtractFromTar(BaseParallelProcessor):
         extracted_entries = []
 
         with tarfile.open(tar_file, 'r') as tar:
-
             for entry in tqdm(entries):
                 extracted_path = Path(self.extract_to_dir, entry['audio_filepath']).as_posix()
-                
+
                 if not os.path.exists(extracted_path):
                     tar.extract(member=entry['audio_filepath'], path=self.extract_to_dir)
 
