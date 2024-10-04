@@ -19,7 +19,7 @@ import os
 import random
 import re
 import tarfile
-from pathlib import Path
+from pathlib import Path, PosixPath
 from typing import Dict, List
 
 import psutil
@@ -599,23 +599,19 @@ class SubRegex(BaseParallelProcessor):
 
 class RandomSegment(BaseParallelProcessor):
     """
-    Processor for converting video or audio files to audio using FFmpeg and updating the dataset with the path to the resampled audio.
-    If ``id_key`` is not None, the output file path will be ``<resampled_audio_dir>/<id_key>.wav``.
-    If ``id_key`` is None, the output file path will be ``<resampled_audio_dir>/<input file name without extension>.wav``.
-
-    .. note:: ``id_key`` can be used to create subdirectories inside ``resampled_audio_dir`` (by using forward slashes ``/``).
-        e.g. if ``id_key`` takes the form ``dir_name1/dir_name2/filename``, the output file path will be
-
-        ``<resampled_audio_dir>/dir_name1/dirname2/filename.wav``.
+    Processor that randomly segments mini-audios from the main audio, durations of which are uniformely distributed from ``min_duration`` to ``max_duration``.
+    New audios are saved in the following location ``<resampled_audio_dir>/<audio_file>_segment_num.<audio_format>``
 
     Args:
-        converted_audio_dir (str): The directory to store the resampled audio files.
-        input_file_key (str): The field in the dataset representing the path to the input video or audio files.
-        output_file_key (str): The field in the dataset representing the path to the resampled audio files with ``output_format``. If ``id_key`` is None, the output file path will be ``<resampled_audio_dir>/<input file name without extension>.wav``.
-        id_key (str): (Optional) The field in the dataset representing the unique ID or identifier for each entry. If ``id_key`` is not None, the output file path will be ``<resampled_audio_dir>/<id_key>.wav``. Defaults to None.
-        output_format (str): (Optional) Format of the output audio files. Defaults to `wav`.
-        target_samplerate (int): (Optional) The target sampling rate for the resampled audio. Defaults to 16000.
-        target_nchannels (int): (Optional) The target number of channels for the resampled audio. Defaults to 1.
+        min_duration (float): minimum duration for the newly segmented audio.
+        max_duration (float): maximum duration for the newly segmented audio.
+        resampled_audio_dir (str) (Optional): directory where the resampled audio files will be stored.
+        audio_format (str) (Optional): key to get audio filepath from data entry. Defaults to None.
+        audio_filepath_key (str) (Optional): format of the output audio files. Defaults to `wav`. Defaults to ``audio_filepath``
+        save_other_part (bool) (Optional): whether to save the residual part of the audio after segmentation. Defaults to True.
+        random_seed (int) (Optional): seed for ``random.uniform``. Defaults to 1000.
+        target_samplerate (int) (Optional): the target sample rate for the resampled audio. Defaults to 16000.
+        target_nchannels (int) (Optional): the target number of channels for the resampled audio. Defaults to 1.
         **kwargs: Additional keyword arguments to be passed to the base class `BaseParallelProcessor`.
 
     """
@@ -630,6 +626,7 @@ class RandomSegment(BaseParallelProcessor):
         save_other_part: bool = True,
         random_seed: int = 1000,
         target_samplerate: int = 16000,
+        target_nchannels: int = 1,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -640,6 +637,7 @@ class RandomSegment(BaseParallelProcessor):
         self.audio_filepath_key = audio_filepath_key
         self.save_other_part = save_other_part
         self.target_samplerate = target_samplerate
+        self.target_nchannels = target_nchannels
         random.seed(random_seed)
 
     def process_dataset_entry(self, data_entry):
@@ -650,6 +648,9 @@ class RandomSegment(BaseParallelProcessor):
 
         if audio.frame_rate != self.target_samplerate:
             audio = audio.set_frame_rate(self.target_samplerate)
+
+        if audio.channels != self.target_nchannels:
+            audio = audio.set_channels(self.target_nchannels)
 
         audio_format = self.audio_format if self.audio_format else data_entry[self.audio_filepath_key].suffix
 
@@ -700,32 +701,36 @@ class RandomSegment(BaseParallelProcessor):
                 new_data_entry[self.audio_filepath_key] = new_filename
                 new_data_entry['duration'] = round(duration - rand_dur, 2)
                 data_entries.append(DataEntry(data=new_data_entry))
-                break
 
-            if not self.save_other_part:
-                break
+            break
 
         return data_entries
 
 
 class UntarAudios(BaseParallelProcessor):
+    """Processor that extracts the files from .tar files in ``tar_dir`` to ``resampled_audio_dir``.
+
+    Args:
+        tar_dir (str): directory that contains tarred files.
+        resampled_audio_dir (str): directory where extracted files will be located.
+        remove_tars (bool) (Optional): whether tarred file should be removed after files extraction.
+        **kwargs: Additional keyword arguments to be passed to the base class `BaseParallelProcessor`.
+
+    """
+
     def __init__(
         self,
         tar_dir: str,
         resampled_audio_dir: str,
+        remove_tars: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.tar_dir = Path(tar_dir)
         self.resampled_audio_dir = resampled_audio_dir
+        self.remove_tars = remove_tars
 
     def read_manifest(self):
-        """Reading the input manifest file.
-
-        .. note::
-            This function should be overridden in the "initial" class creating
-            manifest to read from the original source of data.
-        """
         for file in self.tar_dir.glob('*.tar'):
             yield file
 
@@ -741,14 +746,24 @@ class UntarAudios(BaseParallelProcessor):
                 )
             )
 
-    def process_dataset_entry(self, data_entry):
+    def process_dataset_entry(self, data_entry: PosixPath):
         with tarfile.open(data_entry, 'r') as tar:
             tar.extractall(self.resampled_audio_dir)
 
-        os.remove(data_entry)
+        if self.remove_tars:
+            os.remove(data_entry)
 
 
-class ExtractFromTar(BaseParallelProcessor):
+class ExtractFilesFromTar(BaseParallelProcessor):
+    """Processor that extracts the files from ``input_manifest_file`` to ``extract_to_dir``.
+
+    Args:
+        tar_dir (str): directory that contains tarred files.
+        extract_to_dir (str): directory where extracted files will be located.
+        **kwargs: Additional keyword arguments to be passed to the base class `BaseParallelProcessor`.
+
+    """
+
     def __init__(
         self,
         tar_dir: str,
@@ -760,16 +775,10 @@ class ExtractFromTar(BaseParallelProcessor):
         self.extract_to_dir = extract_to_dir
 
     def read_manifest(self):
-        """Reading the input manifest file.
-
-        .. note::
-            This function should be overridden in the "initial" class creating
-            manifest to read from the original source of data.
-        """
         if self.input_manifest_file is None:
-            raise NotImplementedError("Override this method if the processor creates initial manifest")
+            raise ValueError("Manifest with files should be provided!")
 
-        print('Reading Manifest...')
+        logger.info('Reading Manifest...')
 
         tar_entries = collections.defaultdict(list)
 
@@ -784,7 +793,7 @@ class ExtractFromTar(BaseParallelProcessor):
     def process_dataset_entry(self, data_entry):
         shard_id, entries = data_entry
 
-        print('Working on shard_id ', shard_id)
+        logger.info('Working on shard_id ', shard_id)
 
         tar_file = Path(self.tar_dir, f"audio_{shard_id}").with_suffix('.tar')
 

@@ -57,17 +57,13 @@ class BaseProcessor(ABC):
     """
 
     def __init__(self, output_manifest_file: str, input_manifest_file: Optional[str] = None):
-
         if output_manifest_file and input_manifest_file and (output_manifest_file == input_manifest_file):
             # we cannot have the same input and output manifest file specified because we need to be able to
             # read from the input_manifest_file and write to the output_manifest_file at the same time
-            raise ValueError(
-                "A processor's specified input_manifest_file and output_manifest_file cannot be the same"
-            )
+            raise ValueError("A processor's specified input_manifest_file and output_manifest_file cannot be the same")
 
         self.output_manifest_file = output_manifest_file
         self.input_manifest_file = input_manifest_file
-
 
     @abstractmethod
     def process(self):
@@ -118,7 +114,7 @@ class BaseParallelProcessor(BaseProcessor):
         test_cases: Optional[List[Dict]] = None,
         start: int = 0,
         end: int = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
         if max_workers == -1:
@@ -187,16 +183,8 @@ class BaseParallelProcessor(BaseProcessor):
         os.makedirs(os.path.dirname(self.output_manifest_file), exist_ok=True)
         metrics = []
 
-        for chunk_idx, manifest_chunk in enumerate(self._chunk_manifest()):
-
-            if chunk_idx < self.start:
-                continue
-
-            if self.end and chunk_idx > self.end:
-                break
-            
-            with open(self.output_manifest_file.replace(".json", f"_{chunk_idx}.json"), "wt", encoding="utf8") as fout:
-                print("CHUNK #: ", chunk_idx)
+        with open(self.output_manifest_file, "wt", encoding="utf8") as fout:
+            for manifest_chunk in self._chunk_manifest():
                 # this will unroll all inner lists
                 data = itertools.chain(
                     *process_map(
@@ -225,8 +213,7 @@ class BaseParallelProcessor(BaseProcessor):
         """
 
     def _chunk_manifest(self):
-        """Splits the manifest into smaller chunks defined by ``in_memory_chunksize``.
-        """
+        """Splits the manifest into smaller chunks defined by ``in_memory_chunksize``."""
         manifest_chunk = []
         for idx, data_entry in enumerate(self.read_manifest(), 1):
             manifest_chunk.append(data_entry)
@@ -305,7 +292,6 @@ class BaseParallelProcessor(BaseProcessor):
         logger.info("Total number of entries after processing: %d", self.number_of_entries)
         if self.total_duration != 0:
             logger.info("Total audio duration (hours) after processing: %.2f", self.total_duration / 3600)
-
 
     def test(self):
         """Applies processing to "test_cases" and raises an error in case of mismatch."""

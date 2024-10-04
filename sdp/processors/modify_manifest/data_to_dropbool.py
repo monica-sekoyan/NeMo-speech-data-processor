@@ -800,15 +800,10 @@ class DropIfSubstringInInsertion(BaseParallelProcessor):
 
 
 class DropCorrupted(BaseParallelProcessor):
-    """Drops utterances if attribute is set to True/False.
+    """Drops audios if they are corrupted or empty.
 
     Args:
-        key (str): which key to use for dropping utterances.
-        drop_if_false (bool): whether to drop if value is False. Defaults
-            to dropping if True.
-
-    Returns:
-         The same data as in the input manifest with some entries dropped.
+        audio_filepath_key (str) (Optional): which key to use for audio filepaths. Defaults to ``audio_filepath``
     """
 
     def __init__(
@@ -826,7 +821,6 @@ class DropCorrupted(BaseParallelProcessor):
             return [DataEntry(data=None, metrics=1)]
 
         if sum(data) == 0:
-            print(data_entry[self.audio_filepath_key])
             return [DataEntry(data=None, metrics=1)]
 
         return [DataEntry(data=data_entry, metrics=0)]
@@ -836,5 +830,4 @@ class DropCorrupted(BaseParallelProcessor):
         for counter in metrics:
             total_counter += counter
         logger.info("Dropped %d utterances", total_counter)
-        print("Dropped %d utterances", total_counter)
         super().finalize(metrics)

@@ -73,7 +73,7 @@ from sdp.processors.modify_manifest.common import (
 from sdp.processors.modify_manifest.create_manifest import CreateInitialManifestByExt
 from sdp.processors.modify_manifest.data_to_data import (
     CountNumWords,
-    ExtractFromTar,
+    ExtractFilesFromTar,
     FfmpegConvert,
     GetAudioDuration,
     InsIfASRInsertion,
