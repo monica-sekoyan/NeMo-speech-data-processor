@@ -51,7 +51,6 @@ from sdp.processors.datasets.slr140.create_initial_manifest import (
     CreateInitialManifestSLR140,
     CustomDataSplitSLR140,
 )
-from sdp.processors.datasets.suno.create_initial_manifest import CustomDataSplitSUNO
 from sdp.processors.datasets.voxpopuli.create_initial_manifest import (
     CreateInitialManifestVoxpopuli,
     CreateInitialManifestVoxpopuliUnlabelled,
