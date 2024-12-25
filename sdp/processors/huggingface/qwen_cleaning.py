@@ -31,6 +31,9 @@ class QwenGenerationFiltering(BaseParallelProcessor):
         if "Output:" in generation:
             generation = generation.replace("Output:", "")
 
+        if "Output transcript:" in generation:
+            generation = generation.replace("Output transcript:", "")
+
         if "\n" in generation:
             generation = generation.replace("\n", "")
 
